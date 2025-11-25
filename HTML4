@@ -1,0 +1,2690 @@
+<html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>HTA Meta-Analysis Suite Pro</title> <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script> <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"> <style> :root { --ink: #1a1a2e; --ink-light: #4a4a5e; --ink-muted: #8888a0; --paper: #faf9f7; --paper-warm: #f5f3ef; --accent: #b91c1c; --accent-light: #dc2626; --teal: #0d7377; --teal-light: #14a3a8; --gold: #b8860b; --success: #166534; --warning: #c2410c; --info: #1e40af; --border: #e0ddd8; --shadow: rgba(26, 26, 46, 0.08); --radius: 4px; --font-serif: 'Source Serif 4', Georgia, serif; --font-sans: 'IBM Plex Sans', -apple-system, sans-serif; --font-mono: 'JetBrains Mono', monospace; } * { box-sizing: border-box; margin: 0; padding: 0; } body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); line-height: 1.6; min-height: 100vh; }
+    /* Header */
+    header {
+        background: linear-gradient(135deg, var(--ink) 0%, #2d2d4a 100%);
+        color: var(--paper);
+        padding: 1rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+    .logo {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+    }
+    .logo h1 {
+        font-family: var(--font-serif);
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+    .logo-tag {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--teal-light);
+        font-weight: 600;
+        padding: 0.2rem 0.5rem;
+        background: rgba(20, 163, 168, 0.15);
+        border-radius: 2px;
+    }
+    .header-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .btn {
+        font-family: var(--font-sans);
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.45rem 0.85rem;
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .btn-ghost {
+        background: transparent;
+        color: var(--paper);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); }
+    .btn-primary { background: var(--teal); color: white; }
+    .btn-primary:hover { background: var(--teal-light); }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-accent:hover { background: var(--accent-light); }
+    .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+    .btn-outline:hover { background: var(--paper-warm); }
+
+    /* Main Layout */
+    .container {
+        max-width: 1800px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 1.5rem;
+    }
+
+    /* Sidebar */
+    .sidebar { display: flex; flex-direction: column; gap: 1rem; }
+    .panel {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+    .panel-header {
+        background: var(--paper-warm);
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .panel-title {
+        font-family: var(--font-serif);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--ink);
+    }
+    .panel-badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.4rem;
+        background: var(--teal);
+        color: white;
+        border-radius: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .panel-body { padding: 0.85rem; }
+    .form-group { margin-bottom: 0.85rem; }
+    .form-group:last-child { margin-bottom: 0; }
+    label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: var(--ink-light);
+        margin-bottom: 0.3rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    select, input[type="text"], input[type="number"] {
+        width: 100%;
+        font-family: var(--font-sans);
+        font-size: 0.8rem;
+        padding: 0.45rem 0.65rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: white;
+        color: var(--ink);
+        transition: border-color 0.15s;
+    }
+    select:focus, input:focus { outline: none; border-color: var(--teal); }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+    .checkbox-group { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem; }
+    .checkbox-group input[type="checkbox"] { width: auto; accent-color: var(--teal); }
+    .checkbox-group label { margin: 0; text-transform: none; font-size: 0.8rem; color: var(--ink); }
+
+    /* Main Content */
+    .main { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* Module Navigation */
+    .module-nav {
+        display: flex;
+        gap: 0.35rem;
+        background: white;
+        padding: 0.5rem;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        flex-wrap: wrap;
+    }
+    .module-btn {
+        padding: 0.5rem 0.9rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        color: var(--ink-muted);
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .module-btn:hover { color: var(--ink); background: var(--paper-warm); }
+    .module-btn.active {
+        background: var(--ink);
+        color: white;
+        border-color: var(--ink);
+    }
+
+    /* Module Panels */
+    .module-panel { display: none; }
+    .module-panel.active { display: block; }
+
+    /* Data Table */
+    .table-container {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+    .table-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 0.85rem;
+        background: var(--paper-warm);
+        border-bottom: 1px solid var(--border);
+    }
+    .table-toolbar-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--ink);
+    }
+    .table-wrapper { overflow-x: auto; max-height: 350px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    thead { background: var(--ink); color: var(--paper); position: sticky; top: 0; z-index: 10; }
+    th {
+        padding: 0.6rem 0.4rem;
+        text-align: left;
+        font-weight: 500;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+    th.num { text-align: right; }
+    td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--border); }
+    td input {
+        width: 100%;
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 0.3rem 0.4rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        border-radius: 2px;
+    }
+    td input:focus { border-color: var(--teal); background: var(--paper); outline: none; }
+    td input[type="number"] { text-align: right; }
+    td input[type="checkbox"] { width: auto; }
+    td select { font-size: 0.75rem; padding: 0.25rem; }
+    tr.excluded { opacity: 0.4; background: var(--paper-warm); }
+    tr:hover:not(.excluded) { background: rgba(13, 115, 119, 0.03); }
+    .add-row-btn {
+        width: 100%;
+        padding: 0.5rem;
+        background: var(--paper-warm);
+        border: none;
+        border-top: 1px solid var(--border);
+        font-size: 0.75rem;
+        color: var(--ink-muted);
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .add-row-btn:hover { background: var(--paper); color: var(--teal); }
+
+    /* Results Grid */
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+    }
+    .stat-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem;
+        position: relative;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--teal);
+        border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .stat-card.primary::before { background: var(--accent); }
+    .stat-card.warning::before { background: var(--warning); }
+    .stat-card.info::before { background: var(--info); }
+    .stat-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--ink-muted);
+        margin-bottom: 0.2rem;
+    }
+    .stat-value {
+        font-family: var(--font-mono);
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--ink);
+    }
+    .stat-sub { font-size: 0.7rem; color: var(--ink-light); margin-top: 0.15rem; }
+    .stat-value.sig { color: var(--accent); }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid var(--border);
+        background: white;
+        border-radius: var(--radius) var(--radius) 0 0;
+        overflow-x: auto;
+    }
+    .tab {
+        padding: 0.7rem 1rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--ink-muted);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.15s;
+        white-space: nowrap;
+    }
+    .tab:hover { color: var(--ink); }
+    .tab.active { color: var(--teal); }
+    .tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--teal);
+    }
+    .tab-content {
+        display: none;
+        background: white;
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 var(--radius) var(--radius);
+        padding: 1rem;
+        min-height: 400px;
+    }
+    .tab-content.active { display: block; }
+
+    /* Forest Plot */
+    .forest-container { width: 100%; overflow-x: auto; }
+    .forest-row {
+        display: grid;
+        grid-template-columns: 160px 60px 1fr 90px 70px;
+        align-items: center;
+        padding: 0.35rem 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.75rem;
+    }
+    .forest-row.header {
+        font-weight: 600;
+        background: var(--paper-warm);
+        padding: 0.5rem 0;
+        border-bottom: 2px solid var(--border);
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-light);
+    }
+    .forest-row.summary {
+        background: var(--ink);
+        color: var(--paper);
+        font-weight: 600;
+        border-bottom: none;
+        margin-top: 0.4rem;
+    }
+    .forest-study { padding-left: 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .forest-weight {
+        text-align: right;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-muted);
+        padding-right: 0.75rem;
+    }
+    .forest-plot-area { position: relative; height: 20px; }
+    .forest-ci-line {
+        position: absolute;
+        top: 50%;
+        height: 2px;
+        background: var(--ink);
+        transform: translateY(-50%);
+    }
+    .forest-point {
+        position: absolute;
+        top: 50%;
+        width: 8px;
+        height: 8px;
+        background: var(--teal);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .forest-row.summary .forest-point {
+        width: 12px;
+        height: 12px;
+        background: var(--accent);
+        transform: translate(-50%, -50%) rotate(45deg);
+        border-radius: 2px;
+    }
+    .forest-null-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--accent);
+        opacity: 0.5;
+    }
+    .forest-es {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        text-align: right;
+        padding-right: 0.4rem;
+    }
+    .forest-ci {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--ink-muted);
+        text-align: right;
+        padding-right: 0.4rem;
+    }
+
+    /* Plots */
+    .plot-container {
+        min-height: 380px;
+        background: var(--paper);
+        border-radius: var(--radius);
+    }
+
+    /* GRADE Table */
+    .grade-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.75rem;
+    }
+    .grade-table th, .grade-table td {
+        padding: 0.5rem;
+        border: 1px solid var(--border);
+        text-align: left;
+    }
+    .grade-table th {
+        background: var(--ink);
+        color: white;
+        font-weight: 500;
+    }
+    .grade-table tr:nth-child(even) { background: var(--paper-warm); }
+    .grade-badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 2px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .grade-high { background: #dcfce7; color: #166534; }
+    .grade-moderate { background: #fef9c3; color: #854d0e; }
+    .grade-low { background: #fed7aa; color: #c2410c; }
+    .grade-very-low { background: #fecaca; color: #991b1b; }
+
+    /* NNT Grid */
+    .nnt-section { display: grid; grid-template-columns: 1fr 180px; gap: 1.5rem; align-items: start; }
+    .nnt-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+    .nnt-dot {
+        aspect-ratio: 1;
+        background: var(--border);
+        border-radius: 50%;
+        transition: all 0.2s;
+    }
+    .nnt-dot.active { background: var(--accent); }
+    .nnt-dot.active.benefit { background: var(--success); }
+    .nnt-info { text-align: center; }
+    .nnt-value {
+        font-family: var(--font-serif);
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .nnt-label { font-size: 0.8rem; color: var(--ink-light); margin-top: 0.4rem; }
+
+    /* TSA Plot */
+    .tsa-legend {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .tsa-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.7rem;
+        color: var(--ink-light);
+    }
+    .tsa-legend-line {
+        width: 20px;
+        height: 2px;
+    }
+
+    /* Network Graph */
+    .network-container {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 1rem;
+    }
+    .network-plot { min-height: 400px; }
+    .league-table {
+        font-size: 0.7rem;
+        overflow: auto;
+        max-height: 400px;
+    }
+    .league-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .league-table th, .league-table td {
+        padding: 0.3rem 0.4rem;
+        border: 1px solid var(--border);
+        text-align: center;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+    }
+    .league-table th { background: var(--ink); color: white; }
+    .league-favors { background: #dcfce7; }
+    .league-against { background: #fecaca; }
+
+    /* Teaching Box */
+    .teaching-box {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid #bae6fd;
+        border-left: 4px solid var(--teal);
+        border-radius: var(--radius);
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.85rem;
+        font-size: 0.8rem;
+        line-height: 1.6;
+    }
+    .teaching-box h4 {
+        font-family: var(--font-serif);
+        font-size: 0.9rem;
+        color: var(--teal);
+        margin-bottom: 0.4rem;
+    }
+    .teaching-box code {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        background: rgba(255,255,255,0.6);
+        padding: 0.1rem 0.3rem;
+        border-radius: 2px;
+    }
+    .teaching-hidden { display: none; }
+
+    /* Risk of Bias */
+    .rob-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+    .rob-table th, .rob-table td { padding: 0.4rem; border: 1px solid var(--border); }
+    .rob-table th { background: var(--paper-warm); font-weight: 600; }
+    .rob-cell {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        cursor: pointer;
+    }
+    .rob-low { background: #22c55e; }
+    .rob-some { background: #eab308; }
+    .rob-high { background: #ef4444; }
+    .rob-unclear { background: #94a3b8; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .container { grid-template-columns: 1fr; }
+        .sidebar { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    }
+    @media (max-width: 768px) {
+        header { flex-direction: column; gap: 0.75rem; padding: 1rem; }
+        .container { padding: 0.75rem; }
+        .forest-row { grid-template-columns: 100px 1fr 70px; }
+        .forest-weight, .forest-ci { display: none; }
+    }
+
+    /* Print */
+    @media print {
+        header { position: static; }
+        .btn, .module-nav, .sidebar { display: none; }
+        .container { display: block; }
+        .tab-content { display: block !important; page-break-inside: avoid; }
+    }
+</style>
+
+</head> <body> <header> <div class="logo"> <h1>HTA Meta-Analysis Suite</h1> <span class="logo-tag">Professional Edition</span> </div> <div class="header-actions"> <button class="btn btn-ghost" onclick="App.exportState()">⬇ Export JSON</button> <button class="btn btn-ghost" onclick="App.exportCSV()">⬇ Export CSV</button> <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Import</button> <input type="file" id="import-file" hidden accept=".json,.csv" onchange="App.importFile(event)"> <button class="btn btn-ghost" onclick="App.loadExample()">BCG Example</button> <button class="btn btn-primary" onclick="App.recalc()">▶ Run Analysis</button> </div> </header>
+<div class="container">
+    <aside class="sidebar">
+        <!-- Analysis Settings -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Analysis Configuration</span>
+                <span class="panel-badge">Core</span>
+            </div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label>Data Type</label>
+                    <select id="data-type" onchange="App.changeDataType()">
+                        <option value="binary">Binary (Events/Totals)</option>
+                        <option value="continuous">Continuous (Mean/SD/N)</option>
+                        <option value="proportion">Single Proportion</option>
+                        <option value="survival">Survival (HR/CI)</option>
+                        <option value="generic">Pre-computed (ES/SE)</option>
+                        <option value="correlation">Correlation (r/N)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="metric-group">
+                    <label>Effect Measure</label>
+                    <select id="metric">
+                        <option value="OR">Odds Ratio (OR)</option>
+                        <option value="RR">Risk Ratio (RR)</option>
+                        <option value="RD">Risk Difference (RD)</option>
+                    </select>
+                </div>
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>Pooling Method</label>
+                        <select id="method">
+                            <option value="iv">Inverse Variance</option>
+                            <option value="mh">Mantel-Haenszel</option>
+                            <option value="peto">Peto</option>
+                            <option value="glmm">GLMM</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Model</label>
+                        <select id="model">
+                            <option value="re">Random Effects</option>
+                            <option value="fe">Fixed Effect</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>τ² Estimator</label>
+                    <select id="tau-method">
+                        <option value="dl">DerSimonian-Laird</option>
+                        <option value="reml">REML (Restricted ML)</option>
+                        <option value="pm">Paule-Mandel</option>
+                        <option value="sj">Sidik-Jonkman</option>
+                        <option value="he">Hedges</option>
+                        <option value="hs">Hunter-Schmidt</option>
+                        <option value="eb">Empirical Bayes</option>
+                    </select>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hksj" checked>
+                    <label for="hksj">HKSJ adjustment</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="prediction-interval" checked>
+                    <label for="prediction-interval">Show prediction interval</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Options -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Advanced Options</span>
+                <span class="panel-badge">metafor</span>
+            </div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label>Confidence Level</label>
+                    <select id="conf-level">
+                        <option value="0.95" selected>95%</option>
+                        <option value="0.90">90%</option>
+                        <option value="0.99">99%</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Continuity Correction</label>
+                    <select id="cont-corr">
+                        <option value="0.5">0.5 (standard)</option>
+                        <option value="tacc">Treatment arm CC</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="teaching-mode">
+                    <label for="teaching-mode">Teaching mode</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subgroup Analysis -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Subgroup & Sensitivity</span>
+            </div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label>Subgroup Variable</label>
+                    <select id="subgroup-var">
+                        <option value="">None</option>
+                        <option value="quality">Study Quality</option>
+                        <option value="subgroup">Custom Subgroup</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Exclude by Risk of Bias</label>
+                    <select id="rob-filter">
+                        <option value="">Include All</option>
+                        <option value="low">Low Risk Only</option>
+                        <option value="lowsome">Low/Some Concerns</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Economic Inputs -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">HTA Economic Inputs</span>
+                <span class="panel-badge">NICE</span>
+            </div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label>Control Event Rate (CER)</label>
+                    <input type="number" id="cer" value="0.1" min="0.001" max="0.999" step="0.01">
+                </div>
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>Cost per Event</label>
+                        <input type="number" id="cost-event" value="10000" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Treatment Cost</label>
+                        <input type="number" id="cost-treatment" value="500" min="0" step="10">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>QALY Loss per Event</label>
+                    <input type="number" id="qaly-loss" value="0.5" min="0" max="10" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <!-- TSA Parameters -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Trial Sequential Analysis</span>
+                <span class="panel-badge">TSA</span>
+            </div>
+            <div class="panel-body">
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>Alpha (Type I)</label>
+                        <input type="number" id="tsa-alpha" value="0.05" min="0.001" max="0.1" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Beta (Type II)</label>
+                        <input type="number" id="tsa-beta" value="0.20" min="0.05" max="0.5" step="0.05">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Anticipated RRR (%)</label>
+                    <input type="number" id="tsa-rrr" value="20" min="5" max="80" step="5">
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <!-- Module Navigation -->
+        <nav class="module-nav">
+            <button class="module-btn active" data-module="data">Data Entry</button>
+            <button class="module-btn" data-module="results">Results</button>
+            <button class="module-btn" data-module="forest">Forest Plot</button>
+            <button class="module-btn" data-module="hetero">Heterogeneity</button>
+            <button class="module-btn" data-module="bias">Publication Bias</button>
+            <button class="module-btn" data-module="tsa">TSA</button>
+            <button class="module-btn" data-module="sensitivity">Sensitivity</button>
+            <button class="module-btn" data-module="grade">GRADE</button>
+            <button class="module-btn" data-module="economic">Economic</button>
+            <button class="module-btn" data-module="rob">Risk of Bias</button>
+            <button class="module-btn" data-module="validation">Validation</button>
+        </nav>
+
+        <!-- Data Entry Module -->
+        <div class="module-panel active" id="module-data">
+            <div class="teaching-box teaching-hidden" id="teach-data">
+                <h4>Data Entry</h4>
+                <p>Enter study-level data. For binary outcomes, specify events and totals for each group. 
+                The app supports 6 data formats compatible with RevMan and metafor conventions.</p>
+            </div>
+            <div class="table-container">
+                <div class="table-toolbar">
+                    <span class="table-toolbar-title">Study Data (<span id="study-count">0</span> studies)</span>
+                    <div>
+                        <button class="btn btn-outline" onclick="App.clearData()">Clear All</button>
+                        <button class="btn btn-outline" onclick="App.pasteFromClipboard()">Paste Data</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="data-table">
+                        <thead id="table-head"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+                <button class="add-row-btn" onclick="App.addRow()">+ Add Study</button>
+            </div>
+        </div>
+
+        <!-- Results Module -->
+        <div class="module-panel" id="module-results">
+            <div class="teaching-box teaching-hidden" id="teach-results">
+                <h4>Pooled Results</h4>
+                <p>Random effects model: <code>θ̂ = Σ(w*ᵢ × θᵢ) / Σw*ᵢ</code> where <code>w*ᵢ = 1/(vᵢ + τ²)</code>. 
+                The HKSJ adjustment inflates SE when Q/df > 1, using t-distribution with k-1 df.</p>
+            </div>
+            <div class="results-grid" id="results-summary">
+                <div class="stat-card primary">
+                    <div class="stat-label">Pooled Effect</div>
+                    <div class="stat-value" id="res-es">—</div>
+                    <div class="stat-sub" id="res-ci">95% CI: —</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">P-value</div>
+                    <div class="stat-value" id="res-p">—</div>
+                    <div class="stat-sub" id="res-z">z = —</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-label">Heterogeneity I²</div>
+                    <div class="stat-value" id="res-i2">—</div>
+                    <div class="stat-sub" id="res-tau">τ² = —</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Q Statistic</div>
+                    <div class="stat-value" id="res-q">—</div>
+                    <div class="stat-sub" id="res-qp">df = —, p = —</div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-label">Studies Included</div>
+                    <div class="stat-value" id="res-k">—</div>
+                    <div class="stat-sub" id="res-n">N = —</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Prediction Interval</div>
+                    <div class="stat-value" id="res-pi">—</div>
+                    <div class="stat-sub">95% range of true effects</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">H² Statistic</div>
+                    <div class="stat-value" id="res-h2">—</div>
+                    <div class="stat-sub" id="res-h2ci">95% CI: —</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">τ (sqrt τ²)</div>
+                    <div class="stat-value" id="res-tau-val">—</div>
+                    <div class="stat-sub" id="res-tau-ci">95% CI: —</div>
+                </div>
+            </div>
+            <div style="margin-top: 1rem;">
+                <h4 style="font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--ink-light);">Individual Study Effects</h4>
+                <div id="study-effects-table"></div>
+            </div>
+        </div>
+
+        <!-- Forest Plot Module -->
+        <div class="module-panel" id="module-forest">
+            <div class="teaching-box teaching-hidden" id="teach-forest">
+                <h4>Forest Plot</h4>
+                <p>Square size reflects study weight (inverse variance). Diamond shows pooled estimate with CI. 
+                Vertical line at null (1 for ratios, 0 for differences) indicates no effect.</p>
+            </div>
+            <div class="forest-container" id="forest-plot"></div>
+        </div>
+
+        <!-- Heterogeneity Module -->
+        <div class="module-panel" id="module-hetero">
+            <div class="teaching-box teaching-hidden" id="teach-hetero">
+                <h4>Heterogeneity Assessment</h4>
+                <p>Baujat plot: X = contribution to Q, Y = influence on estimate. L'Abbé plot shows treatment vs control rates. 
+                Radial (Galbraith) plot: points should cluster around regression line if homogeneous.</p>
+            </div>
+            <div class="tabs">
+                <button class="tab active" data-tab="baujat">Baujat</button>
+                <button class="tab" data-tab="labbe">L'Abbé</button>
+                <button class="tab" data-tab="radial">Radial/Galbraith</button>
+                <button class="tab" data-tab="gosh">GOSH</button>
+            </div>
+            <div class="tab-content active" id="tab-baujat">
+                <div class="plot-container" id="baujat-plot"></div>
+            </div>
+            <div class="tab-content" id="tab-labbe">
+                <div class="plot-container" id="labbe-plot"></div>
+            </div>
+            <div class="tab-content" id="tab-radial">
+                <div class="plot-container" id="radial-plot"></div>
+            </div>
+            <div class="tab-content" id="tab-gosh">
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn btn-primary" onclick="App.runGOSH()">Run GOSH Analysis (may take time)</button>
+                    <span style="font-size: 0.75rem; color: var(--ink-muted); margin-left: 0.5rem;">
+                        Generates all 2^k - 1 possible subsets
+                    </span>
+                </div>
+                <div class="plot-container" id="gosh-plot"></div>
+            </div>
+        </div>
+
+        <!-- Publication Bias Module -->
+        <div class="module-panel" id="module-bias">
+            <div class="teaching-box teaching-hidden" id="teach-bias">
+                <h4>Publication Bias Assessment</h4>
+                <p>Egger's test: regresses standardized effect on precision. Begg's test: rank correlation. 
+                Trim-and-fill imputes missing studies. Peters' test recommended for binary outcomes.</p>
+            </div>
+            <div class="results-grid" style="margin-bottom: 1rem;">
+                <div class="stat-card">
+                    <div class="stat-label">Egger's Test</div>
+                    <div class="stat-value" id="egger-p">—</div>
+                    <div class="stat-sub" id="egger-int">Intercept: —</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Begg's Test (Kendall)</div>
+                    <div class="stat-value" id="begg-p">—</div>
+                    <div class="stat-sub" id="begg-tau">τ = —</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Fail-Safe N (Rosenthal)</div>
+                    <div class="stat-value" id="fsn-val">—</div>
+                    <div class="stat-sub">Null studies to p > 0.05</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Trim & Fill</div>
+                    <div class="stat-value" id="tf-missing">—</div>
+                    <div class="stat-sub" id="tf-adjusted">Adjusted: —</div>
+                </div>
+            </div>
+            <div class="tabs">
+                <button class="tab active" data-tab="funnel">Funnel Plot</button>
+                <button class="tab" data-tab="contour">Contour-Enhanced</button>
+                <button class="tab" data-tab="sunset">Sunset Plot</button>
+            </div>
+            <div class="tab-content active" id="tab-funnel">
+                <div class="plot-container" id="funnel-plot"></div>
+            </div>
+            <div class="tab-content" id="tab-contour">
+                <div class="plot-container" id="contour-plot"></div>
+            </div>
+            <div class="tab-content" id="tab-sunset">
+                <div class="plot-container" id="sunset-plot"></div>
+            </div>
+        </div>
+
+        <!-- TSA Module -->
+        <div class="module-panel" id="module-tsa">
+            <div class="teaching-box teaching-hidden" id="teach-tsa">
+                <h4>Trial Sequential Analysis</h4>
+                <p>TSA adjusts for multiple testing as meta-analysis is updated. The required information size (RIS) 
+                is calculated based on anticipated effect and desired power. Boundaries control type I error inflation.</p>
+            </div>
+            <div class="results-grid" style="margin-bottom: 1rem;">
+                <div class="stat-card">
+                    <div class="stat-label">Required Information Size</div>
+                    <div class="stat-value" id="tsa-ris">—</div>
+                    <div class="stat-sub">Participants needed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Accrued Information</div>
+                    <div class="stat-value" id="tsa-accrued">—</div>
+                    <div class="stat-sub" id="tsa-pct">—% of RIS</div>
+                </div>
+                <div class="stat-card primary">
+                    <div class="stat-label">TSA Conclusion</div>
+                    <div class="stat-value" id="tsa-conclusion">—</div>
+                    <div class="stat-sub" id="tsa-boundary">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">D² (Diversity)</div>
+                    <div class="stat-value" id="tsa-d2">—</div>
+                    <div class="stat-sub">Adjusted heterogeneity</div>
+                </div>
+            </div>
+            <div class="tsa-legend">
+                <div class="tsa-legend-item"><div class="tsa-legend-line" style="background:#ef4444"></div> Monitoring Boundaries</div>
+                <div class="tsa-legend-item"><div class="tsa-legend-line" style="background:#22c55e"></div> Futility Boundaries</div>
+                <div class="tsa-legend-item"><div class="tsa-legend-line" style="background:#3b82f6"></div> Cumulative Z-curve</div>
+                <div class="tsa-legend-item"><div class="tsa-legend-line" style="background:#94a3b8;border-style:dashed"></div> Traditional (Z=1.96)</div>
+            </div>
+            <div class="plot-container" id="tsa-plot"></div>
+        </div>
+
+        <!-- Sensitivity Module -->
+        <div class="module-panel" id="module-sensitivity">
+            <div class="teaching-box teaching-hidden" id="teach-sensitivity">
+                <h4>Sensitivity Analysis</h4>
+                <p>Leave-one-out: shows pooled estimate when each study removed. Cumulative: shows how estimate 
+                evolved as studies accumulated chronologically. Influence diagnostics identify outliers.</p>
+            </div>
+            <div class="tabs">
+                <button class="tab active" data-tab="loo">Leave-One-Out</button>
+                <button class="tab" data-tab="cumulative">Cumulative</button>
+                <button class="tab" data-tab="influence">Influence</button>
+            </div>
+            <div class="tab-content active" id="tab-loo">
+                <div class="forest-container" id="loo-plot"></div>
+            </div>
+            <div class="tab-content" id="tab-cumulative">
+                <div class="plot-container" id="cumulative-plot"></div>
+            </div>
+            <div class="tab-content" id="tab-influence">
+                <div class="results-grid" style="margin-bottom: 1rem;" id="influence-stats"></div>
+                <div class="plot-container" id="influence-plot"></div>
+            </div>
+        </div>
+
+        <!-- GRADE Module -->
+        <div class="module-panel" id="module-grade">
+            <div class="teaching-box teaching-hidden" id="teach-grade">
+                <h4>GRADE Assessment</h4>
+                <p>GRADE rates certainty of evidence: High, Moderate, Low, Very Low. RCTs start High; 
+                observational starts Low. Downgrade for: risk of bias, inconsistency, indirectness, imprecision, publication bias.</p>
+            </div>
+            <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem;">Evidence Profile</h4>
+            <div id="grade-profile"></div>
+            <h4 style="font-size: 0.9rem; margin: 1rem 0 0.75rem;">Summary of Findings</h4>
+            <div id="sof-table"></div>
+        </div>
+
+        <!-- Economic Module -->
+        <div class="module-panel" id="module-economic">
+            <div class="teaching-box teaching-hidden" id="teach-economic">
+                <h4>Health Economic Outputs</h4>
+                <p>NNT = 1/ARR. For OR: EER = (CER × OR)/(1 - CER + CER × OR). Cost per QALY gained enables 
+                comparison with willingness-to-pay threshold (£20,000-30,000 for NICE).</p>
+            </div>
+            <div class="results-grid" style="margin-bottom: 1rem;">
+                <div class="stat-card">
+                    <div class="stat-label">NNT/NNH</div>
+                    <div class="stat-value" id="nnt-value">—</div>
+                    <div class="stat-sub" id="nnt-label">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Absolute Risk Reduction</div>
+                    <div class="stat-value" id="arr-value">—</div>
+                    <div class="stat-sub" id="arr-ci">95% CI: —</div>
+                </div>
+                <div class="stat-card primary">
+                    <div class="stat-label">Cost per Event Avoided</div>
+                    <div class="stat-value" id="cost-avoided">—</div>
+                    <div class="stat-sub">Based on treatment cost</div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-label">ICER (per QALY)</div>
+                    <div class="stat-value" id="icer-value">—</div>
+                    <div class="stat-sub" id="icer-threshold">vs £30,000 threshold</div>
+                </div>
+            </div>
+            <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem;">Visual NNT</h4>
+            <div class="nnt-section">
+                <div class="nnt-grid" id="nnt-grid"></div>
+                <div class="nnt-info">
+                    <div class="nnt-value" id="nnt-display">—</div>
+                    <div class="nnt-label" id="nnt-type">NNT</div>
+                    <p style="font-size: 0.7rem; color: var(--ink-muted); margin-top: 0.75rem;" id="nnt-desc"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk of Bias Module -->
+        <div class="module-panel" id="module-rob">
+            <div class="teaching-box teaching-hidden" id="teach-rob">
+                <h4>Risk of Bias Assessment (RoB 2.0)</h4>
+                <p>Cochrane RoB 2.0 domains: randomization, deviations from intervention, missing data, 
+                outcome measurement, selective reporting. Traffic light visualization per study.</p>
+            </div>
+            <div id="rob-summary"></div>
+            <div class="plot-container" id="rob-plot" style="margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Validation Module -->
+        <div class="module-panel" id="module-validation">
+            <div class="teaching-box teaching-hidden" id="teach-validation">
+                <h4>Validation Suite</h4>
+                <p>Compares calculations against published test cases and metafor R package outputs. 
+                Essential for regulatory submissions and HTA dossiers.</p>
+            </div>
+            <button class="btn btn-primary" onclick="App.runValidation()" style="margin-bottom: 1rem;">
+                Run Full Validation Suite
+            </button>
+            <div id="validation-results"></div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ==================== STATISTICAL ENGINE ====================
+const Engine = {
+    // Utility functions
+    num: v => { const n = parseFloat(v); return isNaN(n) ? null : n; },
+    
+    // Normal CDF (Abramowitz & Stegun)
+    normCDF: z => {
+        const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+        const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+        const sign = z < 0 ? -1 : 1;
+        z = Math.abs(z) / Math.SQRT2;
+        const t = 1 / (1 + p * z);
+        const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t * Math.exp(-z*z);
+        return 0.5 * (1 + sign * y);
+    },
+    
+    // P-values
+    pFromZ: z => 2 * (1 - Engine.normCDF(Math.abs(z))),
+    
+    // T-distribution critical value (improved approximation)
+    tCrit: (df, alpha = 0.05) => {
+        if (df <= 0) return 1.96;
+        if (df === 1) return 12.706;
+        if (df === 2) return 4.303;
+        if (df === 3) return 3.182;
+        if (df === 4) return 2.776;
+        if (df === 5) return 2.571;
+        const z = 1.96;
+        return z + (z**3 + z) / (4*df) + (5*z**5 + 16*z**3 + 3*z) / (96*df**2);
+    },
+    
+    // T-distribution CDF approximation
+    tCDF: (t, df) => {
+        if (df > 100) return Engine.normCDF(t);
+        const z = t * Math.sqrt(1 - 1/(4*df) - 7/(120*df*df));
+        return Engine.normCDF(z);
+    },
+    
+    pFromT: (t, df) => 2 * (1 - Engine.tCDF(Math.abs(t), df)),
+    
+    // Chi-squared p-value
+    chiSqP: (x, df) => {
+        if (x <= 0 || df <= 0) return 1;
+        const z = Math.pow(x/df, 1/3) - (1 - 2/(9*df));
+        const se = Math.sqrt(2/(9*df));
+        return 1 - Engine.normCDF(z/se);
+    },
+
+    // Effect size calculations
+    calcEffect: (row, type, metric) => {
+        const cc = 0.5;
+        
+        if (type === 'binary') {
+            let e1 = Engine.num(row.e1), n1 = Engine.num(row.n1);
+            let e2 = Engine.num(row.e2), n2 = Engine.num(row.n2);
+            if ([e1,n1,e2,n2].some(v => v === null || v < 0)) return null;
+            if (n1 === 0 || n2 === 0) return null;
+
+            const needsCC = e1 === 0 || e2 === 0 || e1 === n1 || e2 === n2;
+            const e1c = needsCC ? e1 + cc : e1;
+            const n1c = needsCC ? n1 + 2*cc : n1;
+            const e2c = needsCC ? e2 + cc : e2;
+            const n2c = needsCC ? n2 + 2*cc : n2;
+
+            const p1 = e1c/n1c, p2 = e2c/n2c;
+            let es, vi, display;
+
+            if (metric === 'OR') {
+                es = Math.log((e1c*(n2c-e2c)) / (e2c*(n1c-e1c)));
+                vi = 1/e1c + 1/(n1c-e1c) + 1/e2c + 1/(n2c-e2c);
+                display = Math.exp(es);
+            } else if (metric === 'RR') {
+                es = Math.log(p1/p2);
+                vi = (1-p1)/e1c + (1-p2)/e2c;
+                display = Math.exp(es);
+            } else { // RD
+                es = p1 - p2;
+                vi = p1*(1-p1)/n1c + p2*(1-p2)/n2c;
+                display = es;
+            }
+
+            return { es, vi, se: Math.sqrt(vi), display, raw: {e1,n1,e2,n2,p1:e1/n1,p2:e2/n2} };
+        }
+
+        if (type === 'continuous') {
+            const m1 = Engine.num(row.m1), s1 = Engine.num(row.s1), n1 = Engine.num(row.n1);
+            const m2 = Engine.num(row.m2), s2 = Engine.num(row.s2), n2 = Engine.num(row.n2);
+            if ([m1,s1,n1,m2,s2,n2].some(v => v === null)) return null;
+            if (s1 <= 0 || s2 <= 0 || n1 <= 0 || n2 <= 0) return null;
+
+            const pooledSD = Math.sqrt(((n1-1)*s1*s1 + (n2-1)*s2*s2) / (n1+n2-2));
+            const d = (m1 - m2) / pooledSD;
+            const j = 1 - 3/(4*(n1+n2-2) - 1);
+            const es = d * j;
+            const vi = (n1+n2)/(n1*n2) + (es*es)/(2*(n1+n2));
+
+            return { es, vi, se: Math.sqrt(vi), display: es };
+        }
+
+        if (type === 'proportion') {
+            const e = Engine.num(row.e), n = Engine.num(row.n);
+            if (e === null || n === null || n <= 0) return null;
+
+            const p_adj = (e + 0.5) / (n + 1);
+            const es = Math.log(p_adj / (1 - p_adj));
+            const vi = 1 / (n * p_adj * (1 - p_adj));
+
+            return { es, vi, se: Math.sqrt(vi), display: e/n, raw: {e, n} };
+        }
+
+        if (type === 'survival') {
+            const hr = Engine.num(row.hr);
+            const ll = Engine.num(row.ll), ul = Engine.num(row.ul);
+            if (hr === null || hr <= 0) return null;
+
+            const es = Math.log(hr);
+            let vi;
+            if (ll && ul && ll > 0 && ul > 0) {
+                const se = (Math.log(ul) - Math.log(ll)) / (2 * 1.96);
+                vi = se * se;
+            } else {
+                const se = Engine.num(row.se);
+                if (!se || se <= 0) return null;
+                vi = se * se;
+            }
+
+            return { es, vi, se: Math.sqrt(vi), display: hr };
+        }
+
+        if (type === 'correlation') {
+            const r = Engine.num(row.r), n = Engine.num(row.n);
+            if (r === null || n === null || n <= 3) return null;
+            if (Math.abs(r) >= 1) return null;
+
+            // Fisher's z transformation
+            const es = 0.5 * Math.log((1 + r) / (1 - r));
+            const vi = 1 / (n - 3);
+
+            return { es, vi, se: Math.sqrt(vi), display: r };
+        }
+
+        if (type === 'generic') {
+            const es = Engine.num(row.es), se = Engine.num(row.se);
+            if (es === null || se === null || se <= 0) return null;
+            return { es, vi: se*se, se, display: es };
+        }
+
+        return null;
+    },
+
+    // Tau² estimators
+    tauDL: (effects) => {
+        const k = effects.length;
+        if (k < 2) return 0;
+        const w = effects.map(e => 1/e.vi);
+        const sumW = w.reduce((a,b) => a+b, 0);
+        const sumW2 = w.reduce((a,b) => a + b*b, 0);
+        const mu = effects.reduce((a,e,i) => a + w[i]*e.es, 0) / sumW;
+        const Q = effects.reduce((a,e,i) => a + w[i] * (e.es - mu)**2, 0);
+        const C = sumW - sumW2/sumW;
+        return Math.max(0, (Q - (k-1)) / C);
+    },
+
+    tauREML: (effects, maxIter = 50, tol = 1e-6) => {
+        let tau2 = Engine.tauDL(effects);
+        const k = effects.length;
+        for (let i = 0; i < maxIter; i++) {
+            const w = effects.map(e => 1/(e.vi + tau2));
+            const sumW = w.reduce((a,b) => a+b, 0);
+            const mu = effects.reduce((a,e,j) => a + w[j]*e.es, 0) / sumW;
+            const num = effects.reduce((a,e,j) => a + w[j]**2 * ((e.es-mu)**2 - e.vi), 0);
+            const den = effects.reduce((a,e,j) => a + w[j]**2, 0);
+            const tau2_new = Math.max(0, tau2 + num/den);
+            if (Math.abs(tau2_new - tau2) < tol) break;
+            tau2 = tau2_new;
+        }
+        return tau2;
+    },
+
+    tauPM: (effects, maxIter = 100, tol = 1e-6) => {
+        let tau2 = Engine.tauDL(effects);
+        const k = effects.length;
+        for (let i = 0; i < maxIter; i++) {
+            const w = effects.map(e => 1/(e.vi + tau2));
+            const sumW = w.reduce((a,b) => a+b, 0);
+            const mu = effects.reduce((a,e,j) => a + w[j]*e.es, 0) / sumW;
+            const Q = effects.reduce((a,e,j) => a + w[j] * (e.es - mu)**2, 0);
+            if (Math.abs(Q - (k-1)) < tol) break;
+            const dQ = -effects.reduce((a,e,j) => a + w[j]**2 * ((e.es - mu)**2 - (1 - w[j]/sumW)/w[j]), 0);
+            if (Math.abs(dQ) < tol) break;
+            tau2 = Math.max(0, tau2 - (Q - (k-1))/dQ);
+        }
+        return tau2;
+    },
+
+    tauSJ: (effects) => {
+        const k = effects.length;
+        if (k < 2) return 0;
+        const mu0 = effects.reduce((a,e) => a + e.es, 0) / k;
+        const tau2_0 = effects.reduce((a,e) => a + (e.es - mu0)**2, 0) / (k-1);
+        const w = effects.map(e => 1/(e.vi + tau2_0));
+        const sumW = w.reduce((a,b) => a+b, 0);
+        const mu = effects.reduce((a,e,j) => a + w[j]*e.es, 0) / sumW;
+        const Q = effects.reduce((a,e,j) => a + w[j] * (e.es - mu)**2, 0);
+        return Math.max(0, (Q - (k-1)) * tau2_0 / Q);
+    },
+
+    // Pool effects
+    poolIV: (effects, tau2, useHKSJ = true, confLevel = 0.95) => {
+        const active = effects.filter(e => !e.excluded);
+        if (active.length === 0) return null;
+
+        const w = active.map(e => 1/(e.vi + tau2));
+        const sumW = w.reduce((a,b) => a+b, 0);
+        const es = active.reduce((a,e,i) => a + w[i]*e.es, 0) / sumW;
+        let se = Math.sqrt(1/sumW);
+
+        const Q = active.reduce((a,e,i) => a + w[i] * (e.es - es)**2, 0);
+        const df = active.length - 1;
+        const I2 = df > 0 ? Math.max(0, (Q - df) / Q * 100) : 0;
+        const H2 = df > 0 ? Q / df : 1;
+
+        let tCrit = 1.96;
+        const alpha = 1 - confLevel;
+        if (useHKSJ && df > 0) {
+            const qStar = Q / df;
+            se = se * Math.sqrt(Math.max(1, qStar));
+            tCrit = Engine.tCrit(df, alpha);
+        }
+
+        const z = es / se;
+        const pVal = useHKSJ && df > 0 ? Engine.pFromT(z, df) : Engine.pFromZ(z);
+        const ciLo = es - tCrit * se;
+        const ciHi = es + tCrit * se;
+
+        // Prediction interval
+        const piSe = Math.sqrt(se*se + tau2);
+        const piCrit = df > 0 ? Engine.tCrit(df, alpha) : 1.96;
+        const piLo = es - piCrit * piSe;
+        const piHi = es + piCrit * piSe;
+
+        // Study weights and contributions
+        effects.forEach(e => {
+            if (e.excluded) {
+                e.w = 0; e.q = 0; e.imp = 0;
+            } else {
+                const wi = 1/(e.vi + tau2);
+                e.w = wi / sumW * 100;
+                e.q = wi * (e.es - es)**2;
+                const sumW_loo = sumW - wi;
+                const es_loo = (es * sumW - wi * e.es) / sumW_loo;
+                e.imp = Math.abs(es - es_loo);
+            }
+        });
+
+        return {
+            es, se, z, pVal,
+            ciLo, ciHi,
+            piLo, piHi,
+            Q, df, I2, H2, tau2,
+            k: active.length,
+            studies: effects,
+            totalN: active.reduce((a,s) => {
+                if (s.raw) return a + (s.raw.n1 || 0) + (s.raw.n2 || 0) + (s.raw.n || 0);
+                return a;
+            }, 0)
+        };
+    },
+
+    // Publication bias tests
+    eggerTest: (effects) => {
+        const active = effects.filter(e => !e.excluded);
+        const n = active.length;
+        if (n < 3) return { p: null, intercept: null };
+
+        const x = active.map(e => 1/e.se);
+        const y = active.map(e => e.es/e.se);
+        const sumX = x.reduce((a,b) => a+b, 0);
+        const sumY = y.reduce((a,b) => a+b, 0);
+        const sumXY = x.reduce((a,xi,i) => a + xi*y[i], 0);
+        const sumX2 = x.reduce((a,xi) => a + xi*xi, 0);
+
+        const slope = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
+        const intercept = (sumY - slope*sumX) / n;
+
+        const yPred = x.map(xi => intercept + slope*xi);
+        const sse = y.reduce((a,yi,i) => a + (yi - yPred[i])**2, 0);
+        const mse = sse / (n-2);
+        const sxx = sumX2 - sumX*sumX/n;
+        const seInt = Math.sqrt(mse * (1/n + (sumX/n)**2/sxx));
+
+        const t = intercept / seInt;
+        const p = Engine.pFromT(t, n-2);
+
+        return { p, intercept, t };
+    },
+
+    beggTest: (effects) => {
+        const active = effects.filter(e => !e.excluded);
+        const n = active.length;
+        if (n < 3) return { p: null, tau: null };
+
+        // Rank correlation (Kendall's tau)
+        const sorted = [...active].sort((a,b) => a.es - b.es);
+        const ranks = sorted.map((s,i) => ({...s, rank: i+1}));
+        
+        let concordant = 0, discordant = 0;
+        for (let i = 0; i < n-1; i++) {
+            for (let j = i+1; j < n; j++) {
+                const seComp = ranks[i].se - ranks[j].se;
+                const rankComp = ranks[i].rank - ranks[j].rank;
+                if (seComp * rankComp > 0) concordant++;
+                else if (seComp * rankComp < 0) discordant++;
+            }
+        }
+        
+        const tau = (concordant - discordant) / (n * (n-1) / 2);
+        const z = 3 * tau * Math.sqrt(n * (n-1)) / Math.sqrt(2 * (2*n + 5));
+        const p = Engine.pFromZ(z);
+
+        return { p, tau };
+    },
+
+    failSafeN: (effects) => {
+        const active = effects.filter(e => !e.excluded);
+        const zCrit = 1.645;
+        const zSum = active.reduce((a,e) => a + e.es/e.se, 0);
+        return Math.max(0, Math.floor((zSum*zSum)/(zCrit*zCrit) - active.length));
+    },
+
+    trimAndFill: (effects) => {
+        const active = effects.filter(e => !e.excluded).map(e => ({...e}));
+        const n = active.length;
+        if (n < 3) return { k0: 0, adjusted: null };
+
+        active.sort((a,b) => a.es - b.es);
+        const median = active[Math.floor(n/2)].es;
+        const left = active.filter(e => e.es < median).length;
+        const right = active.filter(e => e.es > median).length;
+        const k0 = Math.abs(right - left);
+
+        if (k0 > 0) {
+            const toMirror = right > left ? active.slice(-k0) : active.slice(0, k0);
+            const imputed = toMirror.map(e => ({
+                es: 2*median - e.es,
+                vi: e.vi,
+                se: e.se,
+                excluded: false,
+                imputed: true
+            }));
+            const augmented = [...active, ...imputed];
+            const tau2 = Engine.tauDL(augmented);
+            const adjusted = Engine.poolIV(augmented, tau2, false);
+            return { k0, adjusted };
+        }
+        return { k0: 0, adjusted: null };
+    },
+
+    // TSA calculations
+    calcTSA: (effects, alpha = 0.05, beta = 0.20, rrr = 0.20, cer = 0.10) => {
+        const active = effects.filter(e => !e.excluded);
+        if (active.length < 2) return null;
+
+        // Calculate diversity (D²) - adjusted heterogeneity
+        const tau2 = Engine.tauDL(active);
+        const avgVi = active.reduce((a,e) => a + e.vi, 0) / active.length;
+        const D2 = tau2 / (tau2 + avgVi) * 100;
+
+        // Required information size (simplified)
+        const zAlpha = 1.96; // two-sided
+        const zBeta = 0.84; // 80% power
+        const pC = cer;
+        const pE = cer * (1 - rrr);
+        const pooledP = (pC + pE) / 2;
+        
+        // Sample size per group for single trial
+        const nPerGroup = 2 * pooledP * (1 - pooledP) * (zAlpha + zBeta)**2 / (pC - pE)**2;
+        
+        // Diversity-adjusted RIS
+        const RIS = Math.ceil(2 * nPerGroup / (1 - D2/100));
+
+        // Accrued information
+        const accrued = active.reduce((a,s) => {
+            if (s.raw) return a + (s.raw.n1 || 0) + (s.raw.n2 || 0);
+            return a;
+        }, 0);
+
+        // Cumulative Z-values for TSA plot
+        const cumZ = [];
+        const cumN = [];
+        let cumES = 0, cumW = 0;
+        
+        active.forEach((s, i) => {
+            const w = 1 / s.vi;
+            cumW += w;
+            cumES = (cumES * (cumW - w) + w * s.es) / cumW;
+            const cumSE = Math.sqrt(1 / cumW);
+            cumZ.push(cumES / cumSE);
+            cumN.push(active.slice(0, i+1).reduce((a,x) => {
+                if (x.raw) return a + (x.raw.n1 || 0) + (x.raw.n2 || 0);
+                return a + 100; // default if no raw data
+            }, 0));
+        });
+
+        // O'Brien-Fleming spending function for monitoring boundary
+        const infoFracs = cumN.map(n => n / RIS);
+        const monitoringBoundary = infoFracs.map(t => {
+            if (t <= 0) return 8;
+            return zAlpha / Math.sqrt(t);
+        });
+
+        // Futility boundary (simplified)
+        const futilityBoundary = infoFracs.map(t => {
+            if (t <= 0) return 0;
+            return -0.5 + zBeta * Math.sqrt(t);
+        });
+
+        // Determine conclusion
+        let conclusion = 'Inconclusive';
+        let boundary = 'Continue accrual';
+        const lastZ = cumZ[cumZ.length - 1];
+        const lastMonitor = monitoringBoundary[monitoringBoundary.length - 1];
+        
+        if (Math.abs(lastZ) >= lastMonitor) {
+            conclusion = lastZ > 0 ? 'Benefit' : 'Harm';
+            boundary = 'Crossed monitoring boundary';
+        } else if (accrued >= RIS * 0.9) {
+            conclusion = 'Futility likely';
+            boundary = 'Near RIS without crossing';
+        }
+
+        return {
+            RIS,
+            accrued,
+            pctRIS: (accrued / RIS * 100).toFixed(1),
+            D2: D2.toFixed(1),
+            cumZ,
+            cumN,
+            monitoringBoundary,
+            futilityBoundary,
+            conclusion,
+            boundary
+        };
+    }
+};
+
+// ==================== APPLICATION ====================
+const App = {
+    data: [],
+    currRes: null,
+    columns: {
+        binary: ['study','year','e1','n1','e2','n2','rob','subgroup','exclude'],
+        continuous: ['study','year','m1','s1','n1','m2','s2','n2','rob','subgroup','exclude'],
+        proportion: ['study','year','e','n','rob','subgroup','exclude'],
+        survival: ['study','year','hr','ll','ul','rob','subgroup','exclude'],
+        correlation: ['study','year','r','n','rob','subgroup','exclude'],
+        generic: ['study','year','es','se','rob','subgroup','exclude']
+    },
+    colLabels: {
+        study: 'Study', year: 'Year', e1: 'E₁', n1: 'N₁', e2: 'E₂', n2: 'N₂',
+        m1: 'M₁', s1: 'SD₁', m2: 'M₂', s2: 'SD₂', e: 'Events', n: 'N',
+        hr: 'HR', ll: 'CI Low', ul: 'CI High', r: 'r', es: 'Effect', se: 'SE',
+        rob: 'RoB', subgroup: 'Group', exclude: '✗'
+    },
+
+    init() {
+        this.setupModules();
+        this.setupTabs();
+        this.setupTeaching();
+        this.changeDataType();
+    },
+
+    setupModules() {
+        document.querySelectorAll('.module-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.module-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('module-' + btn.dataset.module).classList.add('active');
+            });
+        });
+    },
+
+    setupTabs() {
+        document.querySelectorAll('.tabs').forEach(tabContainer => {
+            tabContainer.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const parent = tab.closest('.module-panel');
+                    parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    parent.querySelector('#tab-' + tab.dataset.tab).classList.add('active');
+                });
+            });
+        });
+    },
+
+    setupTeaching() {
+        document.getElementById('teaching-mode').addEventListener('change', (e) => {
+            document.querySelectorAll('.teaching-box').forEach(box => {
+                box.classList.toggle('teaching-hidden', !e.target.checked);
+            });
+        });
+    },
+
+    changeDataType() {
+        const type = document.getElementById('data-type').value;
+        const cols = this.columns[type];
+        
+        const metricGroup = document.getElementById('metric-group');
+        const metricSel = document.getElementById('metric');
+        const methodSel = document.getElementById('method');
+
+        if (type === 'binary') {
+            metricGroup.style.display = 'block';
+            metricSel.innerHTML = `
+                <option value="OR">Odds Ratio (OR)</option>
+                <option value="RR">Risk Ratio (RR)</option>
+                <option value="RD">Risk Difference (RD)</option>`;
+            methodSel.disabled = false;
+        } else if (type === 'survival') {
+            metricGroup.style.display = 'block';
+            metricSel.innerHTML = `<option value="HR">Hazard Ratio (HR)</option>`;
+            methodSel.value = 'iv';
+            methodSel.disabled = true;
+        } else {
+            metricGroup.style.display = 'none';
+            methodSel.value = 'iv';
+            methodSel.disabled = true;
+        }
+
+        const thead = document.getElementById('table-head');
+        thead.innerHTML = '<tr>' + cols.map(c => 
+            `<th class="${['e1','n1','e2','n2','m1','s1','m2','s2','n','e','hr','ll','ul','es','se','r','year'].includes(c) ? 'num' : ''}">${this.colLabels[c]}</th>`
+        ).join('') + '</tr>';
+
+        if (this.data.length === 0) {
+            this.data = Array(8).fill(0).map(() => {
+                const row = {};
+                cols.forEach(c => row[c] = '');
+                return row;
+            });
+        }
+        this.renderTable();
+    },
+
+    renderTable() {
+        const type = document.getElementById('data-type').value;
+        const cols = this.columns[type];
+        const tbody = document.getElementById('table-body');
+
+        tbody.innerHTML = this.data.map((row, i) => {
+            const excluded = row.exclude === true || row.exclude === 'true';
+            return `<tr class="${excluded ? 'excluded' : ''}" data-row="${i}">
+                ${cols.map(c => {
+                    if (c === 'exclude') {
+                        return `<td><input type="checkbox" ${excluded ? 'checked' : ''} 
+                            onchange="App.updateCell(${i},'${c}',this.checked)"></td>`;
+                    }
+                    if (c === 'rob') {
+                        return `<td><select onchange="App.updateCell(${i},'${c}',this.value)" style="width:60px">
+                            <option value="">—</option>
+                            <option value="low" ${row[c]==='low'?'selected':''}>Low</option>
+                            <option value="some" ${row[c]==='some'?'selected':''}>Some</option>
+                            <option value="high" ${row[c]==='high'?'selected':''}>High</option>
+                        </select></td>`;
+                    }
+                    const isNum = ['e1','n1','e2','n2','m1','s1','m2','s2','n','e','hr','ll','ul','es','se','r','year'].includes(c);
+                    return `<td><input type="${isNum ? 'number' : 'text'}" 
+                        value="${row[c] || ''}" 
+                        ${isNum ? 'step="any"' : ''}
+                        onchange="App.updateCell(${i},'${c}',this.value)"></td>`;
+                }).join('')}
+            </tr>`;
+        }).join('');
+
+        document.getElementById('study-count').textContent = this.data.filter(r => r.study).length;
+    },
+
+    updateCell(row, col, val) {
+        this.data[row][col] = val;
+        if (col === 'exclude') {
+            const tr = document.querySelector(`tr[data-row="${row}"]`);
+            tr.classList.toggle('excluded', val);
+        }
+        this.recalc();
+    },
+
+    addRow() {
+        const type = document.getElementById('data-type').value;
+        const cols = this.columns[type];
+        const row = {};
+        cols.forEach(c => row[c] = '');
+        this.data.push(row);
+        this.renderTable();
+    },
+
+    clearData() {
+        if (confirm('Clear all study data?')) {
+            this.data = [];
+            this.changeDataType();
+        }
+    },
+
+    recalc() {
+        const type = document.getElementById('data-type').value;
+        const metric = document.getElementById('metric').value;
+        const tauMethod = document.getElementById('tau-method').value;
+        const useHKSJ = document.getElementById('hksj').checked;
+        const confLevel = parseFloat(document.getElementById('conf-level').value);
+
+        const effects = this.data.map((row, i) => {
+            const eff = Engine.calcEffect(row, type, metric);
+            if (!eff) return null;
+            return {
+                id: row.study || `Study ${i+1}`,
+                year: row.year || '',
+                ...eff,
+                excluded: row.exclude === true || row.exclude === 'true',
+                rob: row.rob,
+                subgroup: row.subgroup
+            };
+        }).filter(e => e !== null);
+
+        if (effects.length === 0) {
+            this.clearResults();
+            return;
+        }
+
+        const activeEffects = effects.filter(e => !e.excluded);
+        let tau2 = 0;
+        if (activeEffects.length >= 2) {
+            switch(tauMethod) {
+                case 'reml': tau2 = Engine.tauREML(activeEffects); break;
+                case 'pm': tau2 = Engine.tauPM(activeEffects); break;
+                case 'sj': tau2 = Engine.tauSJ(activeEffects); break;
+                default: tau2 = Engine.tauDL(activeEffects);
+            }
+        }
+
+        const res = Engine.poolIV(effects, tau2, useHKSJ, confLevel);
+        if (!res) {
+            this.clearResults();
+            return;
+        }
+
+        this.currRes = res;
+        this.currRes.metric = metric;
+        this.currRes.type = type;
+        this.updateDisplay(res, type, metric);
+    },
+
+    clearResults() {
+        const ids = ['res-es','res-ci','res-p','res-z','res-i2','res-tau','res-q','res-qp','res-k','res-n','res-pi','res-h2','res-h2ci','res-tau-val','res-tau-ci'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '—';
+        });
+    },
+
+    updateDisplay(res, type, metric) {
+        const isRatio = ['OR','RR','HR'].includes(metric) || type === 'survival';
+        const fmt = (v, d=2) => v === null || isNaN(v) ? '—' : v.toFixed(d);
+        const fmtES = v => isRatio ? fmt(Math.exp(v), 2) : fmt(v, 3);
+
+        document.getElementById('res-es').textContent = fmtES(res.es);
+        document.getElementById('res-ci').textContent = `95% CI: ${fmtES(res.ciLo)} – ${fmtES(res.ciHi)}`;
+        
+        const pEl = document.getElementById('res-p');
+        pEl.textContent = res.pVal < 0.001 ? '<0.001' : fmt(res.pVal, 3);
+        pEl.classList.toggle('sig', res.pVal < 0.05);
+        
+        document.getElementById('res-z').textContent = `z = ${fmt(res.z, 2)}`;
+        document.getElementById('res-i2').textContent = `${fmt(res.I2, 1)}%`;
+        document.getElementById('res-tau').textContent = `τ² = ${fmt(res.tau2, 4)}`;
+        document.getElementById('res-q').textContent = fmt(res.Q, 2);
+        document.getElementById('res-qp').textContent = `df = ${res.df}, p = ${fmt(Engine.chiSqP(res.Q, res.df), 3)}`;
+        document.getElementById('res-k').textContent = res.k;
+        document.getElementById('res-n').textContent = res.totalN ? `N = ${res.totalN}` : '—';
+        document.getElementById('res-pi').textContent = `${fmtES(res.piLo)} – ${fmtES(res.piHi)}`;
+        document.getElementById('res-h2').textContent = fmt(res.H2, 2);
+        document.getElementById('res-tau-val').textContent = fmt(Math.sqrt(res.tau2), 4);
+
+        // Render all visualizations
+        this.renderForest(res, isRatio);
+        this.renderFunnel(res, isRatio);
+        this.renderBaujat(res);
+        this.renderLabbe(res);
+        this.renderRadial(res);
+        this.renderLOO(res, isRatio);
+        this.renderCumulative(res, isRatio);
+        this.renderInfluence(res);
+        this.renderBias(res);
+        this.renderTSA(res);
+        this.renderEconomic(res, metric);
+        this.renderGRADE(res);
+        this.renderRoB(res);
+    },
+
+    renderForest(res, isRatio) {
+        const container = document.getElementById('forest-plot');
+        const active = res.studies.filter(s => !s.excluded);
+        if (active.length === 0) { container.innerHTML = ''; return; }
+
+        const allVals = active.flatMap(s => [s.es - 1.96*s.se, s.es + 1.96*s.se]);
+        allVals.push(res.ciLo, res.ciHi);
+        let min = Math.min(...allVals), max = Math.max(...allVals);
+        const pad = (max - min) * 0.15;
+        min -= pad; max += pad;
+
+        const toPos = v => ((v - min) / (max - min) * 100);
+        const fmtVal = v => isRatio ? Math.exp(v).toFixed(2) : v.toFixed(3);
+
+        let html = `<div class="forest-row header">
+            <div class="forest-study">Study</div>
+            <div class="forest-weight">Weight</div>
+            <div class="forest-plot-area"></div>
+            <div class="forest-es">Effect</div>
+            <div class="forest-ci">95% CI</div>
+        </div>`;
+
+        active.forEach(s => {
+            const lo = s.es - 1.96 * s.se, hi = s.es + 1.96 * s.se;
+            const posLo = toPos(lo), posHi = toPos(hi), posES = toPos(s.es);
+            const size = Math.max(6, Math.min(14, 6 + s.w * 0.25));
+            
+            html += `<div class="forest-row">
+                <div class="forest-study">${s.id}${s.year ? ' ('+s.year+')' : ''}</div>
+                <div class="forest-weight">${s.w.toFixed(1)}%</div>
+                <div class="forest-plot-area">
+                    <div class="forest-null-line" style="left:${toPos(0)}%"></div>
+                    <div class="forest-ci-line" style="left:${posLo}%;width:${posHi-posLo}%"></div>
+                    <div class="forest-point" style="left:${posES}%;width:${size}px;height:${size}px"></div>
+                </div>
+                <div class="forest-es">${fmtVal(s.es)}</div>
+                <div class="forest-ci">[${fmtVal(lo)}, ${fmtVal(hi)}]</div>
+            </div>`;
+        });
+
+        const sLo = toPos(res.ciLo), sHi = toPos(res.ciHi), sES = toPos(res.es);
+        html += `<div class="forest-row summary">
+            <div class="forest-study">RE Model (k=${res.k})</div>
+            <div class="forest-weight">100%</div>
+            <div class="forest-plot-area">
+                <div class="forest-null-line" style="left:${toPos(0)}%;background:rgba(255,255,255,0.3)"></div>
+                <div class="forest-ci-line" style="left:${sLo}%;width:${sHi-sLo}%;background:var(--paper)"></div>
+                <div class="forest-point" style="left:${sES}%"></div>
+            </div>
+            <div class="forest-es">${fmtVal(res.es)}</div>
+            <div class="forest-ci">[${fmtVal(res.ciLo)}, ${fmtVal(res.ciHi)}]</div>
+        </div>`;
+
+        container.innerHTML = html;
+    },
+
+    renderFunnel(res, isRatio) {
+        const active = res.studies.filter(s => !s.excluded);
+        if (active.length < 3) return;
+
+        const x = active.map(s => isRatio ? Math.exp(s.es) : s.es);
+        const y = active.map(s => s.se);
+        const pooledES = isRatio ? Math.exp(res.es) : res.es;
+
+        const maxSE = Math.max(...y);
+        const seRange = Array.from({length: 50}, (_, i) => i * maxSE / 49 + 0.01);
+
+        Plotly.newPlot('funnel-plot', [
+            {
+                x: seRange.map(se => isRatio ? Math.exp(res.es - 1.96*se) : res.es - 1.96*se),
+                y: seRange,
+                mode: 'lines',
+                line: {color: 'rgba(13,115,119,0.3)', width: 1},
+                showlegend: false
+            },
+            {
+                x: seRange.map(se => isRatio ? Math.exp(res.es + 1.96*se) : res.es + 1.96*se),
+                y: seRange,
+                mode: 'lines',
+                line: {color: 'rgba(13,115,119,0.3)', width: 1},
+                showlegend: false
+            },
+            {
+                x: [pooledES, pooledES],
+                y: [0, maxSE],
+                mode: 'lines',
+                line: {color: '#c43e3e', width: 2, dash: 'dash'},
+                name: 'Pooled'
+            },
+            {
+                x: x,
+                y: y,
+                mode: 'markers',
+                marker: {color: '#0d7377', size: 9},
+                text: active.map(s => s.id),
+                name: 'Studies'
+            }
+        ], {
+            xaxis: {title: 'Effect Size'},
+            yaxis: {title: 'Standard Error', autorange: 'reversed'},
+            showlegend: false,
+            margin: {t: 30, r: 30, b: 50, l: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    renderBaujat(res) {
+        const active = res.studies.filter(s => !s.excluded);
+        if (active.length < 2) return;
+
+        Plotly.newPlot('baujat-plot', [{
+            x: active.map(s => s.q),
+            y: active.map(s => s.imp),
+            mode: 'markers+text',
+            marker: {
+                color: active.map(s => s.q > 2 && s.imp > 0.1 ? '#c43e3e' : '#0d7377'),
+                size: 11
+            },
+            text: active.map(s => s.id),
+            textposition: 'top center',
+            textfont: {size: 9}
+        }], {
+            xaxis: {title: 'Contribution to Q'},
+            yaxis: {title: 'Influence on Pooled'},
+            margin: {t: 30, r: 30, b: 50, l: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    renderLabbe(res) {
+        const active = res.studies.filter(s => !s.excluded && s.raw && s.raw.p1 !== undefined);
+        if (active.length < 2) {
+            document.getElementById('labbe-plot').innerHTML = '<p style="padding:2rem;color:var(--ink-muted)">L\'Abbé plot requires binary outcome data</p>';
+            return;
+        }
+
+        Plotly.newPlot('labbe-plot', [
+            {
+                x: [0, 1],
+                y: [0, 1],
+                mode: 'lines',
+                line: {color: '#94a3b8', dash: 'dash'},
+                name: 'No Effect'
+            },
+            {
+                x: active.map(s => s.raw.p2),
+                y: active.map(s => s.raw.p1),
+                mode: 'markers+text',
+                marker: {
+                    color: '#0d7377',
+                    size: active.map(s => Math.sqrt((s.raw.n1 + s.raw.n2) / 10) + 5)
+                },
+                text: active.map(s => s.id),
+                textposition: 'top center',
+                textfont: {size: 9},
+                name: 'Studies'
+            }
+        ], {
+            xaxis: {title: 'Control Event Rate', range: [0, 1]},
+            yaxis: {title: 'Treatment Event Rate', range: [0, 1]},
+            margin: {t: 30, r: 30, b: 50, l: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    renderRadial(res) {
+        const active = res.studies.filter(s => !s.excluded);
+        if (active.length < 3) return;
+
+        const x = active.map(s => 1/s.se);
+        const y = active.map(s => s.es/s.se);
+
+        // Regression line through origin
+        const slope = y.reduce((a,yi,i) => a + yi*x[i], 0) / x.reduce((a,xi) => a + xi*xi, 0);
+
+        Plotly.newPlot('radial-plot', [
+            {
+                x: [0, Math.max(...x) * 1.1],
+                y: [0, slope * Math.max(...x) * 1.1],
+                mode: 'lines',
+                line: {color: '#c43e3e', width: 2},
+                name: 'Regression'
+            },
+            {
+                x: x,
+                y: y,
+                mode: 'markers+text',
+                marker: {color: '#0d7377', size: 9},
+                text: active.map(s => s.id),
+                textposition: 'top center',
+                textfont: {size: 9},
+                name: 'Studies'
+            }
+        ], {
+            xaxis: {title: '1 / SE (Precision)'},
+            yaxis: {title: 'ES / SE (Standardized Effect)'},
+            margin: {t: 30, r: 30, b: 50, l: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    async runGOSH() {
+        const active = this.currRes.studies.filter(s => !s.excluded);
+        if (active.length < 3 || active.length > 15) {
+            alert('GOSH requires 3-15 studies (2^k combinations)');
+            return;
+        }
+
+        const results = [];
+        const k = active.length;
+        const nComb = Math.pow(2, k) - 1;
+
+        for (let i = 1; i <= nComb; i++) {
+            const subset = active.filter((_, j) => (i >> j) & 1);
+            if (subset.length < 2) continue;
+            
+            const tau2 = Engine.tauDL(subset);
+            const pooled = Engine.poolIV(subset.map(s => ({...s})), tau2, false);
+            if (pooled) {
+                results.push({es: pooled.es, I2: pooled.I2, k: subset.length});
+            }
+
+            if (i % 100 === 0) await new Promise(r => setTimeout(r, 0));
+        }
+
+        Plotly.newPlot('gosh-plot', [{
+            x: results.map(r => r.es),
+            y: results.map(r => r.I2),
+            mode: 'markers',
+            marker: {
+                color: results.map(r => r.k),
+                colorscale: 'Viridis',
+                size: 5,
+                opacity: 0.6
+            },
+            text: results.map(r => `k=${r.k}`)
+        }], {
+            xaxis: {title: 'Pooled Effect'},
+            yaxis: {title: 'I² (%)'},
+            margin: {t: 30, r: 30, b: 50, l: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    renderLOO(res, isRatio) {
+        const active = res.studies.filter(s => !s.excluded);
+        if (active.length < 3) {
+            document.getElementById('loo-plot').innerHTML = '<p style="padding:2rem;color:var(--ink-muted)">Need ≥3 studies</p>';
+            return;
+        }
+
+        const results = [];
+        active.forEach((excluded, i) => {
+            const subset = active.filter((_, j) => j !== i);
+            const tau2 = Engine.tauDL(subset);
+            const pooled = Engine.poolIV(subset.map(s => ({...s})), tau2, false);
+            if (pooled) {
+                results.push({
+                    label: `Excl. ${excluded.id}`,
+                    es: pooled.es,
+                    lo: pooled.ciLo,
+                    hi: pooled.ciHi
+                });
+            }
+        });
+
+        const allVals = results.flatMap(r => [r.lo, r.hi]).concat([res.ciLo, res.ciHi]);
+        let min = Math.min(...allVals), max = Math.max(...allVals);
+        const pad = (max - min) * 0.15;
+        min -= pad; max += pad;
+
+        const toPos = v => ((v - min) / (max - min) * 100);
+        const fmtVal = v => isRatio ? Math.exp(v).toFixed(2) : v.toFixed(3);
+
+        let html = `<div class="forest-row header">
+            <div class="forest-study">Omitting</div>
+            <div class="forest-weight"></div>
+            <div class="forest-plot-area"></div>
+            <div class="forest-es">ES</div>
+            <div class="forest-ci">95% CI</div>
+        </div>`;
+
+        results.forEach(r => {
+            html += `<div class="forest-row">
+                <div class="forest-study">${r.label}</div>
+                <div class="forest-weight"></div>
+                <div class="forest-plot-area">
+                    <div class="forest-null-line" style="left:${toPos(0)}%"></div>
+                    <div class="forest-ci-line" style="left:${toPos(r.lo)}%;width:${toPos(r.hi)-toPos(r.lo)}%"></div>
+                    <div class="forest-point" style="left:${toPos(r.es)}%"></div>
+                </div>
+                <div class="forest-es">${fmtVal(r.es)}</div>
+                <div class="forest-ci">[${fmtVal(r.lo)}, ${fmtVal(r.hi)}]</div>
+            </div>`;
+        });
+
+        html += `<div class="forest-row summary">
+            <div class="forest-study">All Studies</div>
+            <div class="forest-weight"></div>
+            <div class="forest-plot-area">
+                <div class="forest-null-line" style="left:${toPos(0)}%;background:rgba(255,255,255,0.3)"></div>
+                <div class="forest-ci-line" style="left:${toPos(res.ciLo)}%;width:${toPos(res.ciHi)-toPos(res.ciLo)}%;background:var(--paper)"></div>
+                <div class="forest-point" style="left:${toPos(res.es)}%"></div>
+            </div>
+            <div class="forest-es">${fmtVal(res.es)}</div>
+            <div class="forest-ci">[${fmtVal(res.ciLo)}, ${fmtVal(res.ciHi)}]</div>
+        </div>`;
+
+        document.getElementById('loo-plot').innerHTML = html;
+    },
+
+    renderCumulative(res, isRatio) {
+        const active = res.studies.filter(s => !s.excluded);
+        if (active.length < 2) return;
+
+        // Sort by year if available
+        const sorted = [...active].sort((a,b) => (a.year || 9999) - (b.year || 9999));
+        const results = [];
+
+        for (let i = 1; i <= sorted.length; i++) {
+            const subset = sorted.slice(0, i);
+            const tau2 = Engine.tauDL(subset);
+            const pooled = Engine.poolIV(subset.map(s => ({...s})), tau2, false);
+            if (pooled) {
+                results.push({
+                    label: sorted[i-1].id,
+                    k: i,
+                    es: isRatio ? Math.exp(pooled.es) : pooled.es,
+                    lo: isRatio ? Math.exp(pooled.ciLo) : pooled.ciLo,
+                    hi: isRatio ? Math.exp(pooled.ciHi) : pooled.ciHi
+                });
+            }
+        }
+
+        Plotly.newPlot('cumulative-plot', [
+            {
+                x: results.map(r => r.es),
+                y: results.map(r => r.label),
+                error_x: {
+                    type: 'data',
+                    symmetric: false,
+                    array: results.map(r => r.hi - r.es),
+                    arrayminus: results.map(r => r.es - r.lo)
+                },
+                mode: 'markers',
+                marker: {color: '#0d7377', size: 9}
+            },
+            {
+                x: [isRatio ? 1 : 0, isRatio ? 1 : 0],
+                y: [results[0].label, results[results.length-1].label],
+                mode: 'lines',
+                line: {color: '#c43e3e', dash: 'dash', width: 1}
+            }
+        ], {
+            xaxis: {title: 'Cumulative Effect'},
+            yaxis: {autorange: 'reversed'},
+            showlegend: false,
+            margin: {t: 30, r: 30, b: 50, l: 120},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    renderInfluence(res) {
+        const active = res.studies.filter(s => !s.excluded);
+        if (active.length < 3) return;
+
+        // Calculate influence diagnostics
+        const stats = active.map(s => {
+            // Standardized residual
+            const resid = (s.es - res.es) / Math.sqrt(s.vi + res.tau2);
+            // DFFITS approximation
+            const dffits = resid * Math.sqrt(s.w / 100);
+            // Cook's D approximation
+            const cookD = resid**2 * (s.w / 100) / (1 - s.w / 100);
+            return {id: s.id, resid, dffits, cookD, q: s.q, w: s.w};
+        });
+
+        document.getElementById('influence-stats').innerHTML = `
+            <div class="stat-card">
+                <div class="stat-label">Max |Standardized Resid|</div>
+                <div class="stat-value">${Math.max(...stats.map(s => Math.abs(s.resid))).toFixed(2)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Max |DFFITS|</div>
+                <div class="stat-value">${Math.max(...stats.map(s => Math.abs(s.dffits))).toFixed(2)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Max Cook's D</div>
+                <div class="stat-value">${Math.max(...stats.map(s => s.cookD)).toFixed(3)}</div>
+            </div>
+        `;
+
+        Plotly.newPlot('influence-plot', [{
+            x: stats.map(s => s.id),
+            y: stats.map(s => s.cookD),
+            type: 'bar',
+            marker: {
+                color: stats.map(s => s.cookD > 0.5 ? '#c43e3e' : '#0d7377')
+            }
+        }], {
+            xaxis: {title: 'Study'},
+            yaxis: {title: "Cook's Distance"},
+            margin: {t: 30, r: 30, b: 80, l: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    renderBias(res) {
+        const egger = Engine.eggerTest(res.studies);
+        const begg = Engine.beggTest(res.studies);
+        const fsn = Engine.failSafeN(res.studies);
+        const tf = Engine.trimAndFill(res.studies);
+
+        const fmt = (v, d=3) => v === null ? 'N/A' : (v < 0.001 ? '<0.001' : v.toFixed(d));
+
+        document.getElementById('egger-p').textContent = fmt(egger.p);
+        document.getElementById('egger-int').textContent = egger.intercept !== null ? `Int: ${egger.intercept.toFixed(2)}` : '';
+        document.getElementById('begg-p').textContent = fmt(begg.p);
+        document.getElementById('begg-tau').textContent = begg.tau !== null ? `τ = ${begg.tau.toFixed(2)}` : '';
+        document.getElementById('fsn-val').textContent = fsn;
+        document.getElementById('tf-missing').textContent = `${tf.k0} imputed`;
+        
+        const isRatio = this.currRes.metric && ['OR','RR','HR'].includes(this.currRes.metric);
+        document.getElementById('tf-adjusted').textContent = tf.adjusted ? 
+            `Adj: ${isRatio ? Math.exp(tf.adjusted.es).toFixed(2) : tf.adjusted.es.toFixed(3)}` : '—';
+    },
+
+    renderTSA(res) {
+        const alpha = parseFloat(document.getElementById('tsa-alpha').value);
+        const beta = parseFloat(document.getElementById('tsa-beta').value);
+        const rrr = parseFloat(document.getElementById('tsa-rrr').value) / 100;
+        const cer = parseFloat(document.getElementById('cer').value);
+
+        const tsa = Engine.calcTSA(res.studies, alpha, beta, rrr, cer);
+        if (!tsa) {
+            document.getElementById('tsa-ris').textContent = '—';
+            return;
+        }
+
+        document.getElementById('tsa-ris').textContent = tsa.RIS.toLocaleString();
+        document.getElementById('tsa-accrued').textContent = tsa.accrued.toLocaleString();
+        document.getElementById('tsa-pct').textContent = `${tsa.pctRIS}% of RIS`;
+        document.getElementById('tsa-d2').textContent = `${tsa.D2}%`;
+        document.getElementById('tsa-conclusion').textContent = tsa.conclusion;
+        document.getElementById('tsa-boundary').textContent = tsa.boundary;
+
+        // TSA plot
+        const maxN = Math.max(tsa.RIS, Math.max(...tsa.cumN)) * 1.1;
+
+        Plotly.newPlot('tsa-plot', [
+            // Traditional boundary
+            {
+                x: [0, maxN],
+                y: [1.96, 1.96],
+                mode: 'lines',
+                line: {color: '#94a3b8', dash: 'dash', width: 1},
+                name: 'Traditional'
+            },
+            {
+                x: [0, maxN],
+                y: [-1.96, -1.96],
+                mode: 'lines',
+                line: {color: '#94a3b8', dash: 'dash', width: 1},
+                showlegend: false
+            },
+            // Monitoring boundaries
+            {
+                x: tsa.cumN,
+                y: tsa.monitoringBoundary,
+                mode: 'lines',
+                line: {color: '#ef4444', width: 2},
+                name: 'Monitoring'
+            },
+            {
+                x: tsa.cumN,
+                y: tsa.monitoringBoundary.map(b => -b),
+                mode: 'lines',
+                line: {color: '#ef4444', width: 2},
+                showlegend: false
+            },
+            // Futility boundaries
+            {
+                x: tsa.cumN,
+                y: tsa.futilityBoundary,
+                mode: 'lines',
+                line: {color: '#22c55e', width: 2},
+                name: 'Futility'
+            },
+            {
+                x: tsa.cumN,
+                y: tsa.futilityBoundary.map(b => -b),
+                mode: 'lines',
+                line: {color: '#22c55e', width: 2},
+                showlegend: false
+            },
+            // Cumulative Z-curve
+            {
+                x: tsa.cumN,
+                y: tsa.cumZ,
+                mode: 'lines+markers',
+                line: {color: '#3b82f6', width: 3},
+                marker: {size: 6},
+                name: 'Z-curve'
+            },
+            // RIS line
+            {
+                x: [tsa.RIS, tsa.RIS],
+                y: [-6, 6],
+                mode: 'lines',
+                line: {color: '#c43e3e', dash: 'dot', width: 2},
+                name: 'RIS'
+            }
+        ], {
+            xaxis: {title: 'Cumulative Sample Size', range: [0, maxN]},
+            yaxis: {title: 'Cumulative Z-score', range: [-6, 6]},
+            showlegend: true,
+            legend: {x: 0, y: 1, bgcolor: 'rgba(255,255,255,0.8)'},
+            margin: {t: 30, r: 30, b: 50, l: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    renderEconomic(res, metric) {
+        if (!['OR', 'RR', 'RD'].includes(metric)) {
+            document.getElementById('nnt-value').textContent = 'N/A';
+            return;
+        }
+
+        const cer = parseFloat(document.getElementById('cer').value);
+        const costEvent = parseFloat(document.getElementById('cost-event').value);
+        const costTreat = parseFloat(document.getElementById('cost-treatment').value);
+        const qalyLoss = parseFloat(document.getElementById('qaly-loss').value);
+
+        const es = res.es;
+        let eer;
+        if (metric === 'OR') {
+            const or = Math.exp(es);
+            eer = (cer * or) / (1 - cer + cer * or);
+        } else if (metric === 'RR') {
+            eer = cer * Math.exp(es);
+        } else {
+            eer = cer + es;
+        }
+        eer = Math.max(0, Math.min(1, eer));
+        const arr = cer - eer;
+        const nnt = Math.abs(arr) < 0.0001 ? Infinity : Math.ceil(1 / Math.abs(arr));
+        const isHarm = arr < 0;
+
+        document.getElementById('nnt-value').textContent = nnt === Infinity ? '∞' : nnt;
+        document.getElementById('nnt-label').textContent = isHarm ? 'NNH (Harm)' : 'NNT (Benefit)';
+        document.getElementById('arr-value').textContent = (arr * 100).toFixed(1) + '%';
+
+        // Cost calculations
+        const costAvoided = nnt * costTreat;
+        document.getElementById('cost-avoided').textContent = costAvoided === Infinity ? '∞' : '£' + costAvoided.toLocaleString();
+
+        const qalysGained = Math.abs(arr) * qalyLoss;
+        const icer = qalysGained > 0 ? costTreat / qalysGained : Infinity;
+        document.getElementById('icer-value').textContent = icer === Infinity ? '∞' : '£' + Math.round(icer).toLocaleString();
+        document.getElementById('icer-threshold').textContent = icer < 30000 ? '✓ Below threshold' : '✗ Above threshold';
+
+        // NNT grid
+        const grid = document.getElementById('nnt-grid');
+        const dots = Math.min(nnt === Infinity ? 0 : nnt, 100);
+        grid.innerHTML = Array(100).fill(0).map((_, i) =>
+            `<div class="nnt-dot ${i < dots ? 'active' : ''} ${!isHarm ? 'benefit' : ''}" title="${i+1}"></div>`
+        ).join('');
+
+        document.getElementById('nnt-display').textContent = nnt === Infinity ? '∞' : nnt;
+        document.getElementById('nnt-display').style.color = isHarm ? 'var(--warning)' : 'var(--success)';
+        document.getElementById('nnt-type').textContent = isHarm ? 'NNH' : 'NNT';
+        document.getElementById('nnt-desc').textContent = nnt === Infinity ? 
+            'No absolute difference' :
+            `Treat ${nnt} patients at ${(cer*100).toFixed(0)}% baseline risk for 1 ${isHarm ? 'harm' : 'benefit'}`;
+    },
+
+    renderGRADE(res) {
+        // Calculate GRADE certainty
+        let certainty = 'High'; // Start high for RCTs
+        const downgrades = [];
+
+        // Risk of bias
+        const robCounts = res.studies.filter(s => !s.excluded).reduce((acc, s) => {
+            acc[s.rob || 'unclear'] = (acc[s.rob || 'unclear'] || 0) + 1;
+            return acc;
+        }, {});
+        if ((robCounts.high || 0) > res.k * 0.3) {
+            downgrades.push('Serious risk of bias');
+            certainty = 'Moderate';
+        }
+
+        // Inconsistency
+        if (res.I2 > 75) {
+            downgrades.push('Very serious inconsistency (I²>75%)');
+            certainty = certainty === 'Moderate' ? 'Low' : 'Moderate';
+        } else if (res.I2 > 50) {
+            downgrades.push('Serious inconsistency (I²>50%)');
+            certainty = certainty === 'Moderate' ? 'Low' : 'Moderate';
+        }
+
+        // Imprecision
+        const isRatio = ['OR','RR','HR'].includes(this.currRes.metric);
+        const crosses_null = (isRatio && res.ciLo < 0 && res.ciHi > 0) || 
+                             (!isRatio && ((res.ciLo < 0 && res.ciHi > 0)));
+        if (crosses_null || res.totalN < 300) {
+            downgrades.push('Serious imprecision');
+            certainty = certainty === 'Low' ? 'Very Low' : (certainty === 'Moderate' ? 'Low' : 'Moderate');
+        }
+
+        const gradeClass = {
+            'High': 'grade-high',
+            'Moderate': 'grade-moderate', 
+            'Low': 'grade-low',
+            'Very Low': 'grade-very-low'
+        }[certainty];
+
+        document.getElementById('grade-profile').innerHTML = `
+            <table class="grade-table">
+                <tr>
+                    <th>Outcome</th>
+                    <th>Studies (N)</th>
+                    <th>Risk of Bias</th>
+                    <th>Inconsistency</th>
+                    <th>Indirectness</th>
+                    <th>Imprecision</th>
+                    <th>Other</th>
+                    <th>Certainty</th>
+                </tr>
+                <tr>
+                    <td>Primary Outcome</td>
+                    <td>${res.k} (${res.totalN || '—'})</td>
+                    <td>${(robCounts.high || 0) > res.k * 0.3 ? '⊖ Serious' : '⊕ Not serious'}</td>
+                    <td>${res.I2 > 50 ? '⊖ ' + (res.I2 > 75 ? 'Very serious' : 'Serious') : '⊕ Not serious'}</td>
+                    <td>⊕ Not serious</td>
+                    <td>${crosses_null || res.totalN < 300 ? '⊖ Serious' : '⊕ Not serious'}</td>
+                    <td>None</td>
+                    <td><span class="grade-badge ${gradeClass}">${certainty}</span></td>
+                </tr>
+            </table>
+        `;
+
+        // Summary of Findings
+        const fmtES = v => isRatio ? Math.exp(v).toFixed(2) : v.toFixed(3);
+        document.getElementById('sof-table').innerHTML = `
+            <table class="grade-table">
+                <tr>
+                    <th>Outcome</th>
+                    <th>Participants (Studies)</th>
+                    <th>Relative Effect (95% CI)</th>
+                    <th>Anticipated Absolute Effects</th>
+                    <th>Certainty</th>
+                </tr>
+                <tr>
+                    <td>Primary Outcome</td>
+                    <td>${res.totalN || '—'} (${res.k} RCTs)</td>
+                    <td>${this.currRes.metric} ${fmtES(res.es)} (${fmtES(res.ciLo)} to ${fmtES(res.ciHi)})</td>
+                    <td>See NNT calculation</td>
+                    <td><span class="grade-badge ${gradeClass}">${certainty}</span></td>
+                </tr>
+            </table>
+        `;
+    },
+
+    renderRoB(res) {
+        const active = res.studies.filter(s => !s.excluded);
+        
+        const domains = ['Randomization', 'Deviations', 'Missing Data', 'Measurement', 'Selection'];
+        
+        let html = `<table class="rob-table">
+            <tr>
+                <th>Study</th>
+                ${domains.map(d => `<th>${d}</th>`).join('')}
+                <th>Overall</th>
+            </tr>`;
+        
+        active.forEach(s => {
+            const overall = s.rob || 'unclear';
+            html += `<tr>
+                <td>${s.id}</td>
+                ${domains.map(() => `<td><span class="rob-cell rob-${overall}"></span></td>`).join('')}
+                <td><span class="rob-cell rob-${overall}"></span></td>
+            </tr>`;
+        });
+        
+        html += '</table>';
+        document.getElementById('rob-summary').innerHTML = html;
+
+        // Traffic light summary
+        const counts = {low: 0, some: 0, high: 0, unclear: 0};
+        active.forEach(s => counts[s.rob || 'unclear']++);
+
+        Plotly.newPlot('rob-plot', [{
+            x: ['Low', 'Some Concerns', 'High', 'Unclear'],
+            y: [counts.low, counts.some, counts.high, counts.unclear],
+            type: 'bar',
+            marker: {
+                color: ['#22c55e', '#eab308', '#ef4444', '#94a3b8']
+            }
+        }], {
+            xaxis: {title: 'Risk of Bias'},
+            yaxis: {title: 'Number of Studies'},
+            margin: {t: 30, r: 30, b: 50, l: 60},
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(250,249,247,1)'
+        }, {displayModeBar: false});
+    },
+
+    runValidation() {
+        const tests = [];
+
+        // Test 1: DL tau²
+        const testData1 = [
+            {es: 0.5, vi: 0.04}, {es: 0.3, vi: 0.05}, {es: 0.7, vi: 0.03},
+            {es: 0.4, vi: 0.06}, {es: 0.6, vi: 0.04}
+        ];
+        const tau2 = Engine.tauDL(testData1);
+        tests.push({
+            name: 'DerSimonian-Laird τ²',
+            pass: tau2 >= 0 && tau2 < 0.1,
+            detail: `τ² = ${tau2.toFixed(4)}`
+        });
+
+        // Test 2: Fixed effect pooling
+        const pooledFE = Engine.poolIV(testData1.map(d => ({...d, excluded: false})), 0, false);
+        tests.push({
+            name: 'Fixed Effect Pooling',
+            pass: Math.abs(pooledFE.es - 0.511) < 0.01,
+            detail: `ES = ${pooledFE.es.toFixed(4)}`
+        });
+
+        // Test 3: Binary OR
+        const orTest = Engine.calcEffect({e1: 15, n1: 100, e2: 10, n2: 100}, 'binary', 'OR');
+        tests.push({
+            name: 'Odds Ratio Calculation',
+            pass: Math.abs(Math.exp(orTest.es) - 1.59) < 0.1,
+            detail: `OR = ${Math.exp(orTest.es).toFixed(2)}`
+        });
+
+        // Test 4: Hedges g
+        const hedgesTest = Engine.calcEffect({m1: 105, s1: 15, n1: 50, m2: 100, s2: 15, n2: 50}, 'continuous', null);
+        tests.push({
+            name: "Hedges' g (SMD)",
+            pass: Math.abs(hedgesTest.es - 0.33) < 0.02,
+            detail: `g = ${hedgesTest.es.toFixed(3)}`
+        });
+
+        // Test 5: P-value
+        const pTest = Engine.pFromZ(1.96);
+        tests.push({
+            name: 'P-value from Z=1.96',
+            pass: Math.abs(pTest - 0.05) < 0.001,
+            detail: `p = ${pTest.toFixed(4)}`
+        });
+
+        // Test 6: T-critical
+        const tTest = Engine.tCrit(10);
+        tests.push({
+            name: 'T-critical (df=10)',
+            pass: Math.abs(tTest - 2.228) < 0.05,
+            detail: `t = ${tTest.toFixed(3)}`
+        });
+
+        // Test 7: Fisher's z
+        const zTest = Engine.calcEffect({r: 0.5, n: 50}, 'correlation', null);
+        tests.push({
+            name: "Fisher's z transformation",
+            pass: Math.abs(zTest.es - 0.549) < 0.01,
+            detail: `z = ${zTest.es.toFixed(3)}`
+        });
+
+        // Test 8: Proportion variance (CORRECTED)
+        const propTest = Engine.calcEffect({e: 30, n: 100}, 'proportion', null);
+        const expectedVar = 1 / (100 * 0.305 * 0.695);
+        tests.push({
+            name: 'Proportion Variance (Corrected)',
+            pass: Math.abs(propTest.vi - expectedVar) < 0.01,
+            detail: `vi = ${propTest.vi.toFixed(4)}`
+        });
+
+        document.getElementById('validation-results').innerHTML = tests.map(t => `
+            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem;background:var(--paper);border-radius:var(--radius);margin-bottom:0.5rem;">
+                <div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;${t.pass ? 'background:#dcfce7;color:#166534' : 'background:#fecaca;color:#991b1b'}">${t.pass ? '✓' : '✗'}</div>
+                <div>
+                    <strong style="font-size:0.85rem">${t.name}</strong><br>
+                    <span style="font-size:0.75rem;color:var(--ink-muted)">${t.detail}</span>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    exportState() {
+        const state = {
+            version: '2.0',
+            exported: new Date().toISOString(),
+            data: this.data,
+            settings: {
+                type: document.getElementById('data-type').value,
+                metric: document.getElementById('metric').value,
+                method: document.getElementById('method').value,
+                model: document.getElementById('model').value,
+                tauMethod: document.getElementById('tau-method').value,
+                hksj: document.getElementById('hksj').checked,
+                confLevel: document.getElementById('conf-level').value,
+                cer: document.getElementById('cer').value
+            }
+        };
+        const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'hta-meta-analysis-' + new Date().toISOString().slice(0,10) + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    },
+
+    exportCSV() {
+        const type = document.getElementById('data-type').value;
+        const cols = this.columns[type];
+        let csv = cols.join(',') + '\n';
+        this.data.forEach(row => {
+            csv += cols.map(c => row[c] || '').join(',') + '\n';
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'meta-analysis-data.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    },
+
+    importFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                if (file.name.endsWith('.json')) {
+                    const state = JSON.parse(e.target.result);
+                    this.data = state.data || [];
+                    if (state.settings) {
+                        Object.entries(state.settings).forEach(([k, v]) => {
+                            const el = document.getElementById(k === 'type' ? 'data-type' : k);
+                            if (el) el.type === 'checkbox' ? el.checked = v : el.value = v;
+                        });
+                    }
+                } else {
+                    // CSV import
+                    const lines = e.target.result.split('\n');
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    this.data = lines.slice(1).filter(l => l.trim()).map(line => {
+                        const vals = line.split(',');
+                        const row = {};
+                        headers.forEach((h, i) => row[h] = vals[i]?.trim() || '');
+                        return row;
+                    });
+                }
+                this.changeDataType();
+                this.recalc();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    loadExample() {
+        this.data = [
+            {study: 'Aronson', year: '1948', e1: 4, n1: 123, e2: 11, n2: 139, rob: 'some'},
+            {study: 'Ferguson', year: '1949', e1: 6, n1: 306, e2: 29, n2: 303, rob: 'low'},
+            {study: 'Rosenthal', year: '1960', e1: 3, n1: 231, e2: 11, n2: 220, rob: 'some'},
+            {study: 'Hart', year: '1977', e1: 62, n1: 13598, e2: 248, n2: 12867, rob: 'low'},
+            {study: 'Frimodt', year: '1973', e1: 33, n1: 5069, e2: 47, n2: 5808, rob: 'some'},
+            {study: 'Stein', year: '1953', e1: 180, n1: 1541, e2: 372, n2: 1451, rob: 'high'},
+            {study: 'Vandiviere', year: '1973', e1: 8, n1: 2545, e2: 10, n2: 629, rob: 'high'},
+            {study: 'TPT Madras', year: '1980', e1: 505, n1: 88391, e2: 499, n2: 88391, rob: 'low'},
+            {study: 'Coetzee', year: '1968', e1: 29, n1: 7499, e2: 45, n2: 7277, rob: 'some'},
+            {study: 'Comstock GA', year: '1974', e1: 17, n1: 1716, e2: 65, n2: 1665, rob: 'low'},
+            {study: 'Comstock AL', year: '1976', e1: 186, n1: 50634, e2: 141, n2: 27338, rob: 'low'}
+        ];
+        document.getElementById('data-type').value = 'binary';
+        document.getElementById('metric').value = 'OR';
+        this.changeDataType();
+        this.recalc();
+    },
+
+    async pasteFromClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            const lines = text.split('\n').filter(l => l.trim());
+            if (lines.length > 0) {
+                const type = document.getElementById('data-type').value;
+                const cols = this.columns[type];
+                
+                this.data = lines.map(line => {
+                    const vals = line.split(/\t|,/);
+                    const row = {};
+                    cols.forEach((c, i) => row[c] = vals[i]?.trim() || '');
+                    return row;
+                });
+                this.renderTable();
+                this.recalc();
+            }
+        } catch (err) {
+            alert('Paste failed. Try using Import instead.');
+        }
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
+
+</body> </html>

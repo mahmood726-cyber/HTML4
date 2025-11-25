@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTA Meta-Analysis Suite Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <h1>HTA Meta-Analysis Suite</h1>
+      <span class="logo-tag">Professional Edition</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="App.exportState()">⬇ Export JSON</button>
+      <button class="btn btn-ghost" onclick="App.exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+      <input type="file" id="import-file" hidden accept=".json,.csv" onchange="App.importFile(event)">
+      <button class="btn btn-ghost" onclick="App.loadExample()">BCG Example</button>
+      <button class="btn btn-primary" onclick="App.recalc()">▶ Run Analysis</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <!-- Analysis Settings -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Analysis Configuration</span>
+          <span class="panel-badge">Core</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label>Data Type</label>
+            <select id="data-type" onchange="App.changeDataType()">
+              <option value="binary">Binary (Events/Totals)</option>
+              <option value="continuous">Continuous (Mean/SD/N)</option>
+              <option value="proportion">Single Proportion</option>
+              <option value="survival">Survival (HR/CI)</option>
+              <option value="generic">Pre-computed (ES/SE)</option>
+              <option value="correlation">Correlation (r/N)</option>
+            </select>
+          </div>
+          <div class="form-group" id="metric-group">
+            <label>Effect Measure</label>
+            <select id="metric">
+              <option value="OR">Odds Ratio (OR)</option>
+              <option value="RR">Risk Ratio (RR)</option>
+              <option value="RD">Risk Difference (RD)</option>
+            </select>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label>Pooling Method</label>
+              <select id="method">
+                <option value="iv">Inverse Variance</option>
+                <option value="mh">Mantel-Haenszel</option>
+                <option value="peto">Peto</option>
+                <option value="glmm">GLMM</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Model</label>
+              <select id="model">
+                <option value="re">Random Effects</option>
+                <option value="fe">Fixed Effect</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>τ² Estimator</label>
+            <select id="tau-method">
+              <option value="dl">DerSimonian-Laird</option>
+              <option value="reml">REML (Restricted ML)</option>
+              <option value="pm">Paule-Mandel</option>
+              <option value="sj">Sidik-Jonkman</option>
+              <option value="he">Hedges</option>
+              <option value="hs">Hunter-Schmidt</option>
+              <option value="eb">Empirical Bayes</option>
+            </select>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="hksj" checked>
+            <label for="hksj">HKSJ adjustment</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="prediction-interval" checked>
+            <label for="prediction-interval">Show prediction interval</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Options -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Advanced Options</span>
+          <span class="panel-badge">metafor</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label>Confidence Level</label>
+            <select id="conf-level">
+              <option value="0.95" selected>95%</option>
+              <option value="0.90">90%</option>
+              <option value="0.99">99%</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Continuity Correction</label>
+            <select id="cont-corr">
+              <option value="0.5">0.5 (standard)</option>
+              <option value="tacc">Treatment arm CC</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="teaching-mode">
+            <label for="teaching-mode">Teaching mode</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subgroup Analysis -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Subgroup & Sensitivity</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label>Subgroup Variable</label>
+            <select id="subgroup-var">
+              <option value="">None</option>
+              <option value="quality">Study Quality</option>
+              <option value="subgroup">Custom Subgroup</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Exclude by Risk of Bias</label>
+            <select id="rob-filter">
+              <option value="">Include All</option>
+              <option value="low">Low Risk Only</option>
+              <option value="lowsome">Low/Some Concerns</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Economic Inputs -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">HTA Economic Inputs</span>
+          <span class="panel-badge">NICE</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label>Control Event Rate (CER)</label>
+            <input type="number" id="cer" value="0.1" min="0.001" max="0.999" step="0.01">
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label>Cost per Event</label>
+              <input type="number" id="cost-event" value="10000" min="0" step="100">
+            </div>
+            <div class="form-group">
+              <label>Treatment Cost</label>
+              <input type="number" id="cost-treatment" value="500" min="0" step="10">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>QALY Loss per Event</label>
+            <input type="number" id="qaly-loss" value="0.5" min="0" max="10" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <!-- TSA Parameters -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Trial Sequential Analysis</span>
+          <span class="panel-badge">TSA</span>
+        </div>
+        <div class="panel-body">
+          <div class="row-2">
+            <div class="form-group">
+              <label>Alpha (Type I)</label>
+              <input type="number" id="tsa-alpha" value="0.05" min="0.001" max="0.1" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Beta (Type II)</label>
+              <input type="number" id="tsa-beta" value="0.20" min="0.05" max="0.5" step="0.05">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Anticipated RRR (%)</label>
+            <input type="number" id="tsa-rrr" value="20" min="5" max="80" step="5">
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- Module Navigation -->
+      <nav class="module-nav">
+        <button class="module-btn active" data-module="data">Data Entry</button>
+        <button class="module-btn" data-module="results">Results</button>
+        <button class="module-btn" data-module="forest">Forest Plot</button>
+        <button class="module-btn" data-module="hetero">Heterogeneity</button>
+        <button class="module-btn" data-module="bias">Publication Bias</button>
+        <button class="module-btn" data-module="tsa">TSA</button>
+        <button class="module-btn" data-module="sensitivity">Sensitivity</button>
+        <button class="module-btn" data-module="grade">GRADE</button>
+        <button class="module-btn" data-module="economic">Economic</button>
+        <button class="module-btn" data-module="rob">Risk of Bias</button>
+      </nav>
+
+      <!-- Data Entry Module -->
+      <div class="module-panel active" id="module-data">
+        <div class="teaching-box teaching-hidden" id="teach-data">
+          <h4>Data Entry</h4>
+          <p>Enter study-level data. For binary outcomes, specify events and totals for each group.
+          The app supports 6 data formats compatible with RevMan and metafor conventions.</p>
+        </div>
+        <div class="table-container">
+          <div class="table-toolbar">
+            <span class="table-toolbar-title">Study Data (<span id="study-count">0</span> studies)</span>
+            <div>
+              <button class="btn btn-outline" onclick="App.clearData()">Clear All</button>
+              <button class="btn btn-outline" onclick="App.pasteFromClipboard()">Paste Data</button>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table id="data-table">
+              <thead id="table-head"></thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+          <button class="add-row-btn" onclick="App.addRow()">+ Add Study</button>
+        </div>
+      </div>
+
+      <!-- Results Module -->
+      <div class="module-panel" id="module-results">
+        <div class="teaching-box teaching-hidden" id="teach-results">
+          <h4>Pooled Results</h4>
+          <p>Random effects model: <code>θ̂ = Σ(w*ᵢ × θᵢ) / Σw*ᵢ</code> where <code>w*ᵢ = 1/(vᵢ + τ²)</code>.
+          The HKSJ adjustment inflates SE when Q/df > 1, using t-distribution with k-1 df.</p>
+        </div>
+        <div class="results-grid" id="results-summary">
+          <div class="stat-card primary">
+            <div class="stat-label">Pooled Effect</div>
+            <div class="stat-value" id="res-es">—</div>
+            <div class="stat-sub" id="res-ci">95% CI: —</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">P-value</div>
+            <div class="stat-value" id="res-p">—</div>
+            <div class="stat-sub" id="res-z">z = —</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-label">Heterogeneity I²</div>
+            <div class="stat-value" id="res-i2">—</div>
+            <div class="stat-sub" id="res-tau">τ² = —</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Q Statistic</div>
+            <div class="stat-value" id="res-q">—</div>
+            <div class="stat-sub" id="res-qp">df = —, p = —</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-label">Studies Included</div>
+            <div class="stat-value" id="res-k">—</div>
+            <div class="stat-sub" id="res-n">N = —</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Prediction Interval</div>
+            <div class="stat-value" id="res-pi">—</div>
+            <div class="stat-sub">95% range of true effects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">H² Statistic</div>
+            <div class="stat-value" id="res-h2">—</div>
+            <div class="stat-sub" id="res-h2ci">95% CI: —</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">τ (sqrt τ²)</div>
+            <div class="stat-value" id="res-tau-val">—</div>
+            <div class="stat-sub" id="res-tau-ci">95% CI: —</div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem;">
+          <h4 style="font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--ink-light);">Individual Study Effects</h4>
+          <div id="study-effects-table"></div>
+        </div>
+      </div>
+
+      <!-- Forest Plot Module -->
+      <div class="module-panel" id="module-forest">
+        <div class="teaching-box teaching-hidden" id="teach-forest">
+          <h4>Forest Plot</h4>
+          <p>Square size reflects study weight (inverse variance). Diamond shows pooled estimate with CI.
+          Vertical line at null (1 for ratios, 0 for differences) indicates no effect.</p>
+        </div>
+        <div class="forest-container" id="forest-plot"></div>
+      </div>
+
+      <!-- Heterogeneity Module -->
+      <div class="module-panel" id="module-hetero">
+        <div class="teaching-box teaching-hidden" id="teach-hetero">
+          <h4>Heterogeneity Assessment</h4>
+          <p>Baujat plot: X = contribution to Q, Y = influence on estimate. L'Abbé plot shows treatment vs control rates.
+          Radial (Galbraith) plot: points should cluster around regression line if homogeneous.</p>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="baujat">Baujat</button>
+          <button class="tab" data-tab="labbe">L'Abbé</button>
+          <button class="tab" data-tab="radial">Radial/Galbraith</button>
+          <button class="tab" data-tab="gosh">GOSH</button>
+        </div>
+        <div class="tab-content active" id="tab-baujat">
+          <div class="plot-container" id="baujat-plot"></div>
+        </div>
+        <div class="tab-content" id="tab-labbe">
+          <div class="plot-container" id="labbe-plot"></div>
+        </div>
+        <div class="tab-content" id="tab-radial">
+          <div class="plot-container" id="radial-plot"></div>
+        </div>
+        <div class="tab-content" id="tab-gosh">
+          <div style="margin-bottom: 1rem;">
+            <button class="btn btn-primary" onclick="App.runGOSH()">Run GOSH Analysis (may take time)</button>
+            <span style="font-size: 0.75rem; color: var(--ink-muted); margin-left: 0.5rem;">
+              Generates all 2^k - 1 possible subsets
+            </span>
+          </div>
+          <div class="plot-container" id="gosh-plot"></div>
+        </div>
+      </div>
+
+      <!-- Publication Bias Module -->
+      <div class="module-panel" id="module-bias">
+        <div class="teaching-box teaching-hidden" id="teach-bias">
+          <h4>Publication Bias Assessment</h4>
+          <p>Egger's test: regresses standardized effect on precision. Begg's test: rank correlation.
+          Trim-and-fill imputes missing studies. Peters' test recommended for binary outcomes.</p>
+        </div>
+        <div class="results-grid" style="margin-bottom: 1rem;">
+          <div class="stat-card">
+            <div class="stat-label">Egger's Test</div>
+            <div class="stat-value" id="egger-p">—</div>
+            <div class="stat-sub" id="egger-int">Intercept: —</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Begg's Test (Kendall)</div>
+            <div class="stat-value" id="begg-p">—</div>
+            <div class="stat-sub" id="begg-tau">τ = —</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Fail-Safe N (Rosenthal)</div>
+            <div class="stat-value" id="fsn-val">—</div>
+            <div class="stat-sub">Null studies to p > 0.05</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Trim & Fill</div>
+            <div class="stat-value" id="tf-missing">—</div>
+            <div class="stat-sub" id="tf-adjusted">Adjusted: —</div>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="funnel">Funnel Plot</button>
+          <button class="tab" data-tab="contour">Contour-Enhanced</button>
+          <button class="tab" data-tab="sunset">Sunset Plot</button>
+        </div>
+        <div class="tab-content active" id="tab-funnel">
+          <div class="plot-container" id="funnel-plot"></div>
+        </div>
+        <div class="tab-content" id="tab-contour">
+          <div class="plot-container" id="contour-plot"></div>
+        </div>
+        <div class="tab-content" id="tab-sunset">
+          <div class="plot-container" id="sunset-plot"></div>
+        </div>
+      </div>
+
+      <!-- TSA Module -->
+      <div class="module-panel" id="module-tsa">
+        <div class="teaching-box teaching-hidden" id="teach-tsa">
+          <h4>Trial Sequential Analysis</h4>
+          <p>TSA adjusts for multiple testing as meta-analysis is updated. The required information size (RIS)
+          is calculated based on anticipated effect and desired power. Boundaries control type I error inflation.</p>
+        </div>
+        <div class="results-grid" style="margin-bottom: 1rem;">
+          <div class="stat-card">
+            <div class="stat-label">Required Information Size</div>
+            <div class="stat-value" id="tsa-ris">—</div>
+            <div class="stat-sub">Participants needed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Accrued Information</div>
+            <div class="stat-value" id="tsa-accrued">—</div>
+            <div class="stat-sub" id="tsa-pct">—% of RIS</div>
+          </div>
+          <div class="stat-card primary">
+            <div class="stat-label">TSA Conclusion</div>
+            <div class="stat-value" id="tsa-conclusion">—</div>
+            <div class="stat-sub" id="tsa-boundary">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">D² (Diversity)</div>
+            <div class="stat-value" id="tsa-d2">—</div>
+            <div class="stat-sub">Adjusted heterogeneity</div>
+          </div>
+        </div>
+        <div class="tsa-legend">
+          <div class="tsa-legend-item"><div class="tsa-legend-line" style="background:#ef4444"></div> Monitoring Boundaries</div>
+          <div class="tsa-legend-item"><div class="tsa-legend-line" style="background:#22c55e"></div> Futility Boundaries</div>
+          <div class="tsa-legend-item"><div class="tsa-legend-line" style="background:#3b82f6"></div> Cumulative Z-curve</div>
+          <div class="tsa-legend-item"><div class="tsa-legend-line" style="background:#94a3b8;border-style:dashed"></div> Traditional (Z=1.96)</div>
+        </div>
+        <div class="plot-container" id="tsa-plot"></div>
+      </div>
+
+      <!-- Sensitivity Module -->
+      <div class="module-panel" id="module-sensitivity">
+        <div class="teaching-box teaching-hidden" id="teach-sensitivity">
+          <h4>Sensitivity Analysis</h4>
+          <p>Leave-one-out: shows pooled estimate when each study removed. Cumulative: shows how estimate
+          evolved as studies accumulated chronologically. Influence diagnostics identify outliers.</p>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="loo">Leave-One-Out</button>
+          <button class="tab" data-tab="cumulative">Cumulative</button>
+          <button class="tab" data-tab="influence">Influence</button>
+        </div>
+        <div class="tab-content active" id="tab-loo">
+          <div class="forest-container" id="loo-plot"></div>
+        </div>
+        <div class="tab-content" id="tab-cumulative">
+          <div class="plot-container" id="cumulative-plot"></div>
+        </div>
+        <div class="tab-content" id="tab-influence">
+          <div class="results-grid" style="margin-bottom: 1rem;" id="influence-stats"></div>
+          <div class="plot-container" id="influence-plot"></div>
+        </div>
+      </div>
+
+      <!-- GRADE Module -->
+      <div class="module-panel" id="module-grade">
+        <div class="teaching-box teaching-hidden" id="teach-grade">
+          <h4>GRADE Assessment</h4>
+          <p>GRADE rates certainty of evidence: High, Moderate, Low, Very Low. RCTs start High;
+          observational starts Low. Downgrade for: risk of bias, inconsistency, indirectness, imprecision, publication bias.</p>
+        </div>
+        <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem;">Evidence Profile</h4>
+        <div id="grade-profile"></div>
+        <h4 style="font-size: 0.9rem; margin: 1rem 0 0.75rem;">Summary of Findings</h4>
+        <div id="sof-table"></div>
+      </div>
+
+      <!-- Economic Module -->
+      <div class="module-panel" id="module-economic">
+        <div class="teaching-box teaching-hidden" id="teach-economic">
+          <h4>Health Economic Outputs</h4>
+          <p>NNT = 1/ARR. For OR: EER = (CER × OR)/(1 - CER + CER × OR). Cost per QALY gained enables
+          comparison with willingness-to-pay threshold (£20,000-30,000 for NICE).</p>
+        </div>
+        <div class="results-grid" style="margin-bottom: 1rem;">
+          <div class="stat-card">
+            <div class="stat-label">NNT/NNH</div>
+            <div class="stat-value" id="nnt-value">—</div>
+            <div class="stat-sub" id="nnt-label">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Absolute Risk Reduction</div>
+            <div class="stat-value" id="arr-value">—</div>
+            <div class="stat-sub" id="arr-ci">95% CI: —</div>
+          </div>
+          <div class="stat-card primary">
+            <div class="stat-label">Cost per Event Avoided</div>
+            <div class="stat-value" id="cost-avoided">—</div>
+            <div class="stat-sub">Based on treatment cost</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-label">ICER (per QALY)</div>
+            <div class="stat-value" id="icer-value">—</div>
+            <div class="stat-sub" id="icer-threshold">vs £30,000 threshold</div>
+          </div>
+        </div>
+        <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem;">Visual NNT</h4>
+        <div class="nnt-section">
+          <div class="nnt-grid" id="nnt-grid"></div>
+          <div class="nnt-info">
+            <div class="nnt-value" id="nnt-display">—</div>
+            <div class="nnt-label" id="nnt-type">NNT</div>
+            <p style="font-size: 0.7rem; color: var(--ink-muted); margin-top: 0.75rem;" id="nnt-desc"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk of Bias Module -->
+      <div class="module-panel" id="module-rob">
+        <div class="teaching-box teaching-hidden" id="teach-rob">
+          <h4>Risk of Bias Assessment (RoB 2.0)</h4>
+          <p>Cochrane RoB 2.0 domains: randomization, deviations from intervention, missing data,
+          outcome measurement, selective reporting. Traffic light visualization per study.</p>
+        </div>
+        <div id="rob-summary"></div>
+        <div class="plot-container" id="rob-plot" style="margin-top: 1rem;"></div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,920 @@
+/**
+ * HTA Meta-Analysis Suite - Main Stylesheet
+ * Modular CSS with CSS custom properties
+ */
+
+/* ==================== CSS Variables ==================== */
+:root {
+  /* Colors */
+  --ink: #1a1a2e;
+  --ink-light: #4a4a5e;
+  --ink-muted: #8888a0;
+  --paper: #faf9f7;
+  --paper-warm: #f5f3ef;
+  --accent: #b91c1c;
+  --accent-light: #dc2626;
+  --teal: #0d7377;
+  --teal-light: #14a3a8;
+  --gold: #b8860b;
+  --success: #166534;
+  --warning: #c2410c;
+  --info: #1e40af;
+  --border: #e0ddd8;
+  --shadow: rgba(26, 26, 46, 0.08);
+
+  /* Spacing & Sizing */
+  --radius: 4px;
+
+  /* Typography */
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ==================== Base Styles ==================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ==================== Header ==================== */
+header {
+  background: linear-gradient(135deg, var(--ink) 0%, #2d2d4a 100%);
+  color: var(--paper);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.logo h1 {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.logo-tag {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--teal-light);
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  background: rgba(20, 163, 168, 0.15);
+  border-radius: 2px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ==================== Buttons ==================== */
+.btn {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.45rem 0.85rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--paper);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-primary {
+  background: var(--teal);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--teal-light);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-accent:hover {
+  background: var(--accent-light);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+
+.btn-outline:hover {
+  background: var(--paper-warm);
+}
+
+/* ==================== Layout ==================== */
+.container {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.5rem;
+}
+
+/* ==================== Sidebar ==================== */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.panel {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.panel-header {
+  background: var(--paper-warm);
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.panel-badge {
+  font-size: 0.6rem;
+  padding: 0.15rem 0.4rem;
+  background: var(--teal);
+  color: white;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.panel-body {
+  padding: 0.85rem;
+}
+
+/* ==================== Forms ==================== */
+.form-group {
+  margin-bottom: 0.85rem;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--ink-light);
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+select,
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  color: var(--ink);
+  transition: border-color 0.15s;
+}
+
+select:focus,
+input:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  accent-color: var(--teal);
+}
+
+.checkbox-group label {
+  margin: 0;
+  text-transform: none;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+
+/* ==================== Main Content ==================== */
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ==================== Module Navigation ==================== */
+.module-nav {
+  display: flex;
+  gap: 0.35rem;
+  background: white;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.module-btn {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.module-btn:hover {
+  color: var(--ink);
+  background: var(--paper-warm);
+}
+
+.module-btn.active {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+}
+
+/* ==================== Module Panels ==================== */
+.module-panel {
+  display: none;
+}
+
+.module-panel.active {
+  display: block;
+}
+
+/* ==================== Data Table ==================== */
+.table-container {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.85rem;
+  background: var(--paper-warm);
+  border-bottom: 1px solid var(--border);
+}
+
+.table-toolbar-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+thead {
+  background: var(--ink);
+  color: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+th {
+  padding: 0.6rem 0.4rem;
+  text-align: left;
+  font-weight: 500;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+th.num {
+  text-align: right;
+}
+
+td {
+  padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+td input {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.3rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  border-radius: 2px;
+}
+
+td input:focus {
+  border-color: var(--teal);
+  background: var(--paper);
+  outline: none;
+}
+
+td input[type="number"] {
+  text-align: right;
+}
+
+td input[type="checkbox"] {
+  width: auto;
+}
+
+td select {
+  font-size: 0.75rem;
+  padding: 0.25rem;
+}
+
+tr.excluded {
+  opacity: 0.4;
+  background: var(--paper-warm);
+}
+
+tr:hover:not(.excluded) {
+  background: rgba(13, 115, 119, 0.03);
+}
+
+.add-row-btn {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--paper-warm);
+  border: none;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.add-row-btn:hover {
+  background: var(--paper);
+  color: var(--teal);
+}
+
+/* ==================== Results Grid ==================== */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  position: relative;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--teal);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.stat-card.primary::before {
+  background: var(--accent);
+}
+
+.stat-card.warning::before {
+  background: var(--warning);
+}
+
+.stat-card.info::before {
+  background: var(--info);
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+  margin-bottom: 0.2rem;
+}
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.stat-sub {
+  font-size: 0.7rem;
+  color: var(--ink-light);
+  margin-top: 0.15rem;
+}
+
+.stat-value.sig {
+  color: var(--accent);
+}
+
+/* ==================== Tabs ==================== */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  background: white;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 0.7rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab.active {
+  color: var(--teal);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--teal);
+}
+
+.tab-content {
+  display: none;
+  background: white;
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 1rem;
+  min-height: 400px;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ==================== Forest Plot ==================== */
+.forest-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.forest-row {
+  display: grid;
+  grid-template-columns: 160px 60px 1fr 90px 70px;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+
+.forest-row.header {
+  font-weight: 600;
+  background: var(--paper-warm);
+  padding: 0.5rem 0;
+  border-bottom: 2px solid var(--border);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-light);
+}
+
+.forest-row.summary {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+  border-bottom: none;
+  margin-top: 0.4rem;
+}
+
+.forest-study {
+  padding-left: 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.forest-weight {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+  padding-right: 0.75rem;
+}
+
+.forest-plot-area {
+  position: relative;
+  height: 20px;
+}
+
+.forest-ci-line {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  background: var(--ink);
+  transform: translateY(-50%);
+}
+
+.forest-point {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  background: var(--teal);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.forest-row.summary .forest-point {
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-radius: 2px;
+}
+
+.forest-null-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+.forest-es {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-align: right;
+  padding-right: 0.4rem;
+}
+
+.forest-ci {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+  text-align: right;
+  padding-right: 0.4rem;
+}
+
+/* ==================== Plots ==================== */
+.plot-container {
+  min-height: 380px;
+  background: var(--paper);
+  border-radius: var(--radius);
+}
+
+.plot-message {
+  padding: 2rem;
+  text-align: center;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+/* ==================== GRADE Table ==================== */
+.grade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.grade-table th,
+.grade-table td {
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.grade-table th {
+  background: var(--ink);
+  color: white;
+  font-weight: 500;
+}
+
+.grade-table tr:nth-child(even) {
+  background: var(--paper-warm);
+}
+
+.grade-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.grade-high {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.grade-moderate {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.grade-low {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.grade-very-low {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+/* ==================== NNT Grid ==================== */
+.nnt-section {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.nnt-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+}
+
+.nnt-dot {
+  aspect-ratio: 1;
+  background: var(--border);
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.nnt-dot.active {
+  background: var(--accent);
+}
+
+.nnt-dot.active.benefit {
+  background: var(--success);
+}
+
+.nnt-info {
+  text-align: center;
+}
+
+.nnt-value {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.nnt-label {
+  font-size: 0.8rem;
+  color: var(--ink-light);
+  margin-top: 0.4rem;
+}
+
+/* ==================== TSA Legend ==================== */
+.tsa-legend {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tsa-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--ink-light);
+}
+
+.tsa-legend-line {
+  width: 20px;
+  height: 2px;
+}
+
+/* ==================== Teaching Box ==================== */
+.teaching-box {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-left: 4px solid var(--teal);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.teaching-box h4 {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  color: var(--teal);
+  margin-bottom: 0.4rem;
+}
+
+.teaching-box code {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+}
+
+.teaching-hidden {
+  display: none;
+}
+
+/* ==================== Risk of Bias ==================== */
+.rob-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.rob-table th,
+.rob-table td {
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+}
+
+.rob-table th {
+  background: var(--paper-warm);
+  font-weight: 600;
+}
+
+.rob-cell {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.rob-low {
+  background: #22c55e;
+}
+
+.rob-some {
+  background: #eab308;
+}
+
+.rob-high {
+  background: #ef4444;
+}
+
+.rob-unclear {
+  background: #94a3b8;
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 1200px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .container {
+    padding: 0.75rem;
+  }
+
+  .forest-row {
+    grid-template-columns: 100px 1fr 70px;
+  }
+
+  .forest-weight,
+  .forest-ci {
+    display: none;
+  }
+}
+
+/* ==================== Print ==================== */
+@media print {
+  header {
+    position: static;
+  }
+
+  .btn,
+  .module-nav,
+  .sidebar {
+    display: none;
+  }
+
+  .container {
+    display: block;
+  }
+
+  .tab-content {
+    display: block !important;
+    page-break-inside: avoid;
+  }
+}

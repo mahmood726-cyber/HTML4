@@ -63,12 +63,12 @@ export function poolInverseVariance(effects, tau2, options = {}) {
   const ciLo = es - critVal * se;
   const ciHi = es + critVal * se;
 
-  // Prediction interval
+  // Prediction interval (uses k-2 df per Higgins et al. 2009)
   let piLo = null;
   let piHi = null;
-  if (showPredictionInterval && df > 0) {
+  if (showPredictionInterval && k > 2) {
     const piSe = Math.sqrt(se * se + tau2);
-    const piCrit = tCritical(df, alpha);
+    const piCrit = tCritical(k - 2, alpha);
     piLo = es - piCrit * piSe;
     piHi = es + piCrit * piSe;
   }

@@ -71,7 +71,8 @@ function calculateBinaryEffect(row, metric, cc) {
 
     case 'RR':
       es = Math.log(p1 / p2);
-      vi = (1 - p1) / e1c + (1 - p2) / e2c;
+      // Correct variance formula: (n-e)/(e*n) for each group
+      vi = (n1c - e1c) / (e1c * n1c) + (n2c - e2c) / (e2c * n2c);
       display = Math.exp(es);
       break;
 

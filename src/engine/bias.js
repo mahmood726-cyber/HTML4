@@ -8,6 +8,7 @@ import { poolInverseVariance } from './pooling.js';
 
 /**
  * Egger's regression test for funnel plot asymmetry
+ * Uses weighted least squares as recommended (Sterne & Egger 2005)
  * @param {Array} effects - Array of effect objects
  * @returns {Object} Test results { p, intercept, t, slope }
  */
@@ -19,32 +20,35 @@ export function eggerTest(effects) {
     return { p: null, intercept: null, t: null, slope: null };
   }
 
-  // Standardized effect (y) vs precision (x)
+  // Standardized effect (y) vs precision (x), weighted by inverse variance
   const x = active.map(e => 1 / e.se);
   const y = active.map(e => e.es / e.se);
+  const w = active.map(e => 1 / e.vi); // Inverse variance weights
 
-  // Linear regression
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
-  const sumX2 = x.reduce((acc, xi) => acc + xi * xi, 0);
+  // Weighted linear regression
+  const sumW = w.reduce((a, b) => a + b, 0);
+  const sumWX = w.reduce((acc, wi, i) => acc + wi * x[i], 0);
+  const sumWY = w.reduce((acc, wi, i) => acc + wi * y[i], 0);
+  const sumWXY = w.reduce((acc, wi, i) => acc + wi * x[i] * y[i], 0);
+  const sumWX2 = w.reduce((acc, wi, i) => acc + wi * x[i] * x[i], 0);
 
-  const denominator = n * sumX2 - sumX * sumX;
-  if (denominator === 0) {
+  const denominator = sumW * sumWX2 - sumWX * sumWX;
+  if (Math.abs(denominator) < 1e-10) {
     return { p: null, intercept: null, t: null, slope: null };
   }
 
-  const slope = (n * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / n;
+  const slope = (sumW * sumWXY - sumWX * sumWY) / denominator;
+  const intercept = (sumWY - slope * sumWX) / sumW;
 
-  // Calculate standard error of intercept
+  // Calculate weighted residual sum of squares
   const yPred = x.map(xi => intercept + slope * xi);
-  const sse = y.reduce((acc, yi, i) => acc + (yi - yPred[i]) ** 2, 0);
-  const mse = sse / (n - 2);
-  const sxx = sumX2 - sumX * sumX / n;
-  const seInt = Math.sqrt(mse * (1 / n + (sumX / n) ** 2 / sxx));
+  const wsse = w.reduce((acc, wi, i) => acc + wi * (y[i] - yPred[i]) ** 2, 0);
+  const mse = wsse / (n - 2);
 
-  // T-test for intercept
+  // Standard error of intercept
+  const seInt = Math.sqrt(mse * sumWX2 / denominator);
+
+  // T-test for intercept (tests for asymmetry)
   const t = intercept / seInt;
   const p = pFromT(t, n - 2);
 

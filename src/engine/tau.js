@@ -82,6 +82,24 @@ export function tauPM(effects, maxIter = PM_CONFIG.maxIterations, tol = PM_CONFI
   // Initialize with DL estimate
   let tau2 = tauDL(effects);
 
+  // If DL gives 0, check if data is homogeneous
+  if (tau2 === 0) {
+    // Check Q with fixed-effect weights
+    const wFE = effects.map(e => 1 / e.vi);
+    const sumWFE = wFE.reduce((a, b) => a + b, 0);
+    const muFE = effects.reduce((acc, e, j) => acc + wFE[j] * e.es, 0) / sumWFE;
+    const QFE = effects.reduce((acc, e, j) => acc + wFE[j] * (e.es - muFE) ** 2, 0);
+
+    // If Q < k-1, data is homogeneous, return 0
+    if (QFE <= k - 1) {
+      return 0;
+    }
+  }
+
+  // Upper bound for tau² to prevent divergence
+  const esRange = Math.max(...effects.map(e => e.es)) - Math.min(...effects.map(e => e.es));
+  const maxTau2 = esRange * esRange * 10; // Reasonable upper bound
+
   for (let i = 0; i < maxIter; i++) {
     const w = effects.map(e => 1 / (e.vi + tau2));
     const sumW = w.reduce((a, b) => a + b, 0);
@@ -106,8 +124,9 @@ export function tauPM(effects, maxIter = PM_CONFIG.maxIterations, tol = PM_CONFI
       return tau2;
     }
 
-    // Newton-Raphson update
-    tau2 = Math.max(0, tau2 - (Q - (k - 1)) / dQ);
+    // Newton-Raphson update with bounds
+    const delta = (Q - (k - 1)) / dQ;
+    tau2 = Math.max(0, Math.min(maxTau2, tau2 - delta));
   }
 
   return tau2;
@@ -165,6 +184,7 @@ export function tauHE(effects) {
 
 /**
  * Hunter-Schmidt tau² estimator
+ * Uses sample sizes as weights (not inverse variance)
  * @param {Array} effects - Array of effect objects
  * @returns {number} Tau² estimate
  */
@@ -172,16 +192,33 @@ export function tauHS(effects) {
   const k = effects.length;
   if (k < 2) return 0;
 
-  // Sample-size weighted mean (approximated by inverse-variance for simplicity)
-  const w = effects.map(e => 1 / e.vi);
-  const sumW = w.reduce((a, b) => a + b, 0);
-  const mu = effects.reduce((acc, e, i) => acc + w[i] * e.es, 0) / sumW;
+  // Get sample sizes - use raw data if available, otherwise estimate from variance
+  const n = effects.map(e => {
+    if (e.raw) {
+      // Binary/continuous data
+      if (e.raw.n1 !== undefined && e.raw.n2 !== undefined) {
+        return e.raw.n1 + e.raw.n2;
+      }
+      // Single group data
+      if (e.raw.n !== undefined) {
+        return e.raw.n;
+      }
+    }
+    // Fallback: estimate N from variance (rough approximation)
+    // For SMD, vi ≈ 2/N, so N ≈ 2/vi
+    return Math.max(10, Math.round(2 / e.vi));
+  });
 
-  // Weighted variance
-  const weightedVar = effects.reduce((acc, e, i) => acc + w[i] * (e.es - mu) ** 2, 0) / sumW;
+  const sumN = n.reduce((a, b) => a + b, 0);
 
-  // Average sampling variance (weighted)
-  const avgVi = effects.reduce((acc, e, i) => acc + w[i] * e.vi, 0) / sumW;
+  // Sample-size weighted mean
+  const mu = effects.reduce((acc, e, i) => acc + n[i] * e.es, 0) / sumN;
+
+  // Weighted variance of effects (between-study variance + sampling variance)
+  const weightedVar = effects.reduce((acc, e, i) => acc + n[i] * (e.es - mu) ** 2, 0) / sumN;
+
+  // Sample-size weighted average sampling variance
+  const avgVi = effects.reduce((acc, e, i) => acc + n[i] * e.vi, 0) / sumN;
 
   return Math.max(0, weightedVar - avgVi);
 }

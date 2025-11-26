@@ -42,8 +42,8 @@ export function calculateTSA(effects, params = {}) {
     return acc;
   }, 0);
 
-  // Calculate cumulative statistics
-  const cumulative = calculateCumulativeZ(active);
+  // Calculate cumulative statistics using RE weights
+  const cumulative = calculateCumulativeZ(active, tau2);
 
   // Calculate monitoring and futility boundaries
   const boundaries = calculateBoundaries(cumulative, RIS, zAlpha, zBeta);
@@ -101,11 +101,12 @@ function calculateRIS(cer, rrr, zAlpha, zBeta, D2) {
 }
 
 /**
- * Calculate cumulative Z-scores
+ * Calculate cumulative Z-scores using random-effects weights
  * @param {Array} active - Active effect objects
+ * @param {number} tau2 - Between-study variance estimate
  * @returns {Object} Cumulative statistics
  */
-function calculateCumulativeZ(active) {
+function calculateCumulativeZ(active, tau2 = 0) {
   const z = [];
   const n = [];
   const es = [];
@@ -115,7 +116,8 @@ function calculateCumulativeZ(active) {
   let cumW = 0;
 
   active.forEach((s, i) => {
-    const w = 1 / s.vi;
+    // Use random-effects weights (vi + tau²)
+    const w = 1 / (s.vi + tau2);
     cumW += w;
     cumES = (cumES * (cumW - w) + w * s.es) / cumW;
     const cumSE = Math.sqrt(1 / cumW);

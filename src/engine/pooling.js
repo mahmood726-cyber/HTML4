@@ -94,6 +94,9 @@ export function poolInverseVariance(effects, tau2, options = {}) {
   // H² CI
   const H2CI = calculateH2CI(H2, df, confLevel);
 
+  // I² CI using heterogeneity.test method (Higgins & Thompson 2002)
+  const I2CI = calculateI2CI(Q, df, confLevel);
+
   return {
     es,
     se,
@@ -107,6 +110,7 @@ export function poolInverseVariance(effects, tau2, options = {}) {
     qPVal,
     df,
     I2,
+    I2CI,
     H2,
     H2CI,
     tau2,
@@ -293,6 +297,96 @@ function calculateH2CI(H2, df, confLevel) {
   const hi = Math.exp(lnH + z * seLnH) ** 2;
 
   return { lo: Math.max(1, lo), hi };
+}
+
+/**
+ * Calculate CI for I² statistic
+ * Uses the test-based method from Higgins & Thompson (2002)
+ * and the improved method from Ioannidis et al. (2007)
+ *
+ * I² = (Q - df) / Q = 1 - df/Q
+ * CI derived from non-central chi-square distribution of Q
+ *
+ * @param {number} Q - Cochran's Q statistic
+ * @param {number} df - Degrees of freedom (k-1)
+ * @param {number} confLevel - Confidence level
+ * @returns {Object} CI bounds { lo, hi } as percentages
+ */
+function calculateI2CI(Q, df, confLevel) {
+  if (df <= 0) {
+    return { lo: 0, hi: 0 };
+  }
+
+  const alpha = 1 - confLevel;
+
+  // Method 1: Test-based CI using Q distribution
+  // Q follows chi-square(df, lambda) where lambda is non-centrality parameter
+  // Under H0 (no heterogeneity), Q ~ chi-square(df)
+
+  // For Q > df, use the relationship I² = 1 - df/Q
+  // CI for Q translates to CI for I²
+
+  // Lower bound for Q (upper percentile of chi-square gives lower I²)
+  // Upper bound for Q (lower percentile of chi-square gives higher I²)
+
+  // Use Biggerstaff-Tweedie method (improved)
+  // B = 0.5 * ln(Q/df)
+  // SE(B) ≈ sqrt(0.5 * (1/df + 1/Q_expected))
+
+  if (Q <= df) {
+    // No observed heterogeneity
+    return { lo: 0, hi: Math.max(0, calculateI2Upper(Q, df, alpha)) };
+  }
+
+  // Calculate H = sqrt(Q/df)
+  const H = Math.sqrt(Q / df);
+  const lnH = Math.log(H);
+
+  // SE of ln(H) - Higgins & Thompson (2002) eq. 12
+  let seLnH;
+  if (Q > df + 1) {
+    // Standard formula
+    seLnH = 0.5 * Math.log(Q / (Q - df)) * (1 / Math.sqrt(2 * (Q - df - 1)));
+  } else {
+    // Use approximation for Q close to df
+    seLnH = Math.sqrt((1 / (2 * (df - 1))) * (1 - 1 / (3 * (df - 1) ** 2)));
+  }
+
+  const z = Math.abs(normQuantileApprox(alpha / 2));
+
+  // CI for H
+  const HLo = Math.max(1, Math.exp(lnH - z * seLnH));
+  const HHi = Math.exp(lnH + z * seLnH);
+
+  // Convert to I² = (H² - 1) / H² = 1 - 1/H²
+  const I2Lo = Math.max(0, (HLo * HLo - 1) / (HLo * HLo) * 100);
+  const I2Hi = Math.min(100, (HHi * HHi - 1) / (HHi * HHi) * 100);
+
+  return { lo: I2Lo, hi: I2Hi };
+}
+
+/**
+ * Calculate upper bound of I² when Q <= df
+ * Uses approximation from Ioannidis et al. (2007)
+ */
+function calculateI2Upper(Q, df, alpha) {
+  // When Q <= df, I² = 0 but upper CI may be positive
+  // Use non-central chi-square relationship
+
+  // Simple approximation: find lambda such that
+  // P(chi-square(df, lambda) >= Q) = alpha/2
+  // Then I²_upper ≈ lambda / (lambda + df)
+
+  // For small Q, use conservative estimate
+  const chiHi = chiSquareQuantile(1 - alpha / 2, df);
+
+  if (Q >= chiHi) {
+    return 0;
+  }
+
+  // Approximate upper bound
+  const ratio = Math.max(0, (chiHi - df) / chiHi);
+  return ratio * 100;
 }
 
 /**

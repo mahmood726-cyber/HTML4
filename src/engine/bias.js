@@ -56,7 +56,8 @@ export function eggerTest(effects) {
 }
 
 /**
- * Begg's rank correlation test
+ * Begg's rank correlation test (adjusted for ties)
+ * Uses Kendall's tau-b with tie corrections
  * @param {Array} effects - Array of effect objects
  * @returns {Object} Test results { p, tau, z }
  */
@@ -68,30 +69,71 @@ export function beggTest(effects) {
     return { p: null, tau: null, z: null };
   }
 
-  // Sort by effect size and assign ranks
-  const sorted = [...active].sort((a, b) => a.es - b.es);
-  const withRanks = sorted.map((s, i) => ({ ...s, rank: i + 1 }));
+  // Get standardized effect sizes (adjusted for variance)
+  // Begg & Mazumdar recommend using variance-standardized residuals
+  const tau2 = tauDL(active);
+  const w = active.map(e => 1 / (e.vi + tau2));
+  const sumW = w.reduce((a, b) => a + b, 0);
+  const mu = active.reduce((acc, e, i) => acc + w[i] * e.es, 0) / sumW;
 
-  // Calculate Kendall's tau between effect size rank and SE
+  // Standardized effect: (es - mu) / se
+  const data = active.map(e => ({
+    standardizedES: (e.es - mu) / e.se,
+    variance: e.vi
+  }));
+
+  // Calculate Kendall's tau-b between standardized ES and variance
   let concordant = 0;
   let discordant = 0;
+  let tiesX = 0; // Ties in standardized ES
+  let tiesY = 0; // Ties in variance
+  let tiesXY = 0; // Joint ties
 
   for (let i = 0; i < n - 1; i++) {
     for (let j = i + 1; j < n; j++) {
-      const seComp = withRanks[i].se - withRanks[j].se;
-      const rankComp = withRanks[i].rank - withRanks[j].rank;
+      const xDiff = data[i].standardizedES - data[j].standardizedES;
+      const yDiff = data[i].variance - data[j].variance;
 
-      if (seComp * rankComp > 0) {
+      const xTied = Math.abs(xDiff) < 1e-10;
+      const yTied = Math.abs(yDiff) < 1e-10;
+
+      if (xTied && yTied) {
+        tiesXY++;
+      } else if (xTied) {
+        tiesX++;
+      } else if (yTied) {
+        tiesY++;
+      } else if (xDiff * yDiff > 0) {
         concordant++;
-      } else if (seComp * rankComp < 0) {
+      } else {
         discordant++;
       }
-      // Ties (seComp * rankComp === 0) are ignored
     }
   }
 
-  const tau = (concordant - discordant) / (n * (n - 1) / 2);
-  const z = 3 * tau * Math.sqrt(n * (n - 1)) / Math.sqrt(2 * (2 * n + 5));
+  const nPairs = n * (n - 1) / 2;
+
+  // Tau-b formula with tie correction
+  const denominator = Math.sqrt((nPairs - tiesX - tiesXY) * (nPairs - tiesY - tiesXY));
+
+  if (denominator < 1e-10) {
+    return { p: 1, tau: 0, z: 0 };
+  }
+
+  const tau = (concordant - discordant) / denominator;
+
+  // Variance of tau-b with tie correction (Kendall 1970)
+  const v0 = n * (n - 1) * (2 * n + 5);
+  const vt = tiesX * (tiesX - 1) * (2 * tiesX + 5);
+  const vu = tiesY * (tiesY - 1) * (2 * tiesY + 5);
+  const v1 = (tiesX * (tiesX - 1)) * (tiesY * (tiesY - 1)) / (2 * n * (n - 1));
+  const v2 = (tiesX * (tiesX - 1) * (tiesX - 2)) * (tiesY * (tiesY - 1) * (tiesY - 2)) /
+             (9 * n * (n - 1) * (n - 2));
+
+  const variance = (v0 - vt - vu) / 18 + v1 + v2;
+  const se = Math.sqrt(Math.max(variance, 1e-10)) / denominator;
+
+  const z = tau / se;
   const p = pFromZ(z);
 
   return { p, tau, z };
@@ -187,45 +229,105 @@ export function orwinFailSafeN(effects, criterion = 0.1, nullEffect = 0) {
 }
 
 /**
- * Trim and fill analysis
+ * Trim and fill analysis using R₀ estimator (Duval & Tweedie 2000)
  * @param {Array} effects - Array of effect objects
- * @param {string} side - Side to trim ('right' or 'left', default: 'right')
- * @returns {Object} Results { k0, imputedStudies, adjusted }
+ * @param {string} estimator - Estimator type: 'R0' or 'L0' (default: 'R0')
+ * @param {string} side - Side to impute: 'right', 'left', or 'auto' (default: 'auto')
+ * @param {number} maxIter - Maximum iterations (default: 10)
+ * @returns {Object} Results { k0, imputedStudies, adjusted, side }
  */
-export function trimAndFill(effects, side = 'right') {
+export function trimAndFill(effects, estimator = 'R0', side = 'auto', maxIter = 10) {
   const active = effects.filter(e => !e.excluded).map(e => ({ ...e }));
   const n = active.length;
 
   if (n < 3) {
-    return { k0: 0, imputedStudies: [], adjusted: null };
+    return { k0: 0, imputedStudies: [], adjusted: null, side: null };
   }
 
-  // Sort by effect size
-  active.sort((a, b) => a.es - b.es);
+  // Initial pooled estimate to determine center
+  let tau2 = tauDL(active);
+  let pooled = poolInverseVariance(active, tau2, { useHKSJ: false });
+  let center = pooled.es;
 
-  // Find median
-  const median = active[Math.floor(n / 2)].es;
+  // Determine side if auto
+  if (side === 'auto') {
+    // Check which side has more extreme studies
+    const deviations = active.map(e => e.es - center);
+    const rightSkew = deviations.filter(d => d > 0).reduce((a, b) => a + b, 0);
+    const leftSkew = Math.abs(deviations.filter(d => d < 0).reduce((a, b) => a + b, 0));
+    side = rightSkew > leftSkew ? 'right' : 'left';
+  }
 
-  // Count studies on each side
-  const left = active.filter(e => e.es < median).length;
-  const right = active.filter(e => e.es > median).length;
+  // Iterative trim and fill
+  let k0 = 0;
+  let trimmed = [...active];
 
-  // Estimate number of missing studies (simplified R0 estimator)
-  const k0 = Math.abs(right - left);
+  for (let iter = 0; iter < maxIter; iter++) {
+    // Sort by distance from center
+    const sorted = [...trimmed].sort((a, b) => {
+      const distA = side === 'right' ? a.es - center : center - a.es;
+      const distB = side === 'right' ? b.es - center : center - b.es;
+      return distB - distA; // Most extreme first
+    });
+
+    // Calculate ranks (1 = most extreme on asymmetric side)
+    const ranks = sorted.map((_, i) => i + 1);
+
+    // R₀ estimator: k0 = max(0, round((4*T - n) / (2*n + 1)))
+    // where T = sum of ranks for studies on asymmetric side
+    let T = 0;
+    sorted.forEach((e, i) => {
+      const deviation = side === 'right' ? e.es - center : center - e.es;
+      if (deviation > 0) {
+        T += ranks[i];
+      }
+    });
+
+    let k0New;
+    if (estimator === 'L0') {
+      // L₀ estimator: k0 = round((4*S² - n) / (2*n - 1))
+      // where S is count of positive deviations
+      const S = sorted.filter(e => (side === 'right' ? e.es - center : center - e.es) > 0).length;
+      k0New = Math.max(0, Math.round((4 * S * S - n) / (2 * n - 1)));
+    } else {
+      // R₀ estimator
+      k0New = Math.max(0, Math.round((4 * T - n * (n + 1) / 2) / (2 * n - 1)));
+    }
+
+    // Check convergence
+    if (k0New === k0) {
+      break;
+    }
+    k0 = k0New;
+
+    // Trim k0 most extreme studies and recalculate center
+    if (k0 > 0 && k0 < n) {
+      trimmed = sorted.slice(k0);
+      tau2 = tauDL(trimmed);
+      pooled = poolInverseVariance(trimmed, tau2, { useHKSJ: false });
+      if (pooled) {
+        center = pooled.es;
+      }
+    }
+  }
 
   if (k0 === 0) {
-    return { k0: 0, imputedStudies: [], adjusted: null };
+    return { k0: 0, imputedStudies: [], adjusted: pooled, side };
   }
 
-  // Identify studies to mirror
-  const toMirror = side === 'right' || right > left
-    ? active.slice(-k0)
-    : active.slice(0, k0);
+  // Identify studies to mirror (k0 most extreme on asymmetric side)
+  const sortedByExtreme = [...active].sort((a, b) => {
+    const distA = side === 'right' ? a.es - center : center - a.es;
+    const distB = side === 'right' ? b.es - center : center - b.es;
+    return distB - distA;
+  });
 
-  // Create imputed studies
+  const toMirror = sortedByExtreme.slice(0, Math.min(k0, n - 1));
+
+  // Create imputed studies (mirror around center)
   const imputedStudies = toMirror.map(e => ({
     id: `Imputed (${e.id})`,
-    es: 2 * median - e.es,
+    es: 2 * center - e.es,
     vi: e.vi,
     se: e.se,
     excluded: false,
@@ -234,10 +336,10 @@ export function trimAndFill(effects, side = 'right') {
 
   // Pool with imputed studies
   const augmented = [...active, ...imputedStudies];
-  const tau2 = tauDL(augmented);
+  tau2 = tauDL(augmented);
   const adjusted = poolInverseVariance(augmented, tau2, { useHKSJ: false });
 
-  return { k0, imputedStudies, adjusted };
+  return { k0, imputedStudies, adjusted, side };
 }
 
 /**

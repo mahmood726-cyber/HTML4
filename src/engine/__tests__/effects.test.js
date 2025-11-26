@@ -154,10 +154,32 @@ describe('Proportion Effect Sizes', () => {
     const row = { e: 30, n: 100 };
     const result = calculateEffect(row, 'proportion', null);
 
-    // Adjusted p = (30+0.5)/(100+1) = 0.302
-    // logit = log(0.302/0.698) = -0.838
+    // Raw p = 30/100 = 0.3
+    // logit = log(0.3/0.7) = -0.847
     expect(result).not.toBeNull();
-    expect(result.es).toBeCloseTo(-0.838, 2);
+    expect(result.es).toBeCloseTo(-0.847, 2);
+    // Variance = 1/(100*0.3*0.7) = 0.0476
+    expect(result.vi).toBeCloseTo(0.0476, 3);
+  });
+
+  it('applies continuity correction for zero events', () => {
+    const row = { e: 0, n: 100 };
+    const result = calculateEffect(row, 'proportion', null);
+
+    // Adjusted p = (0+0.5)/(100+1) = 0.00495
+    expect(result).not.toBeNull();
+    expect(result.es).toBeLessThan(-4); // Very negative logit
+    expect(Number.isFinite(result.vi)).toBe(true);
+  });
+
+  it('applies continuity correction for all events', () => {
+    const row = { e: 100, n: 100 };
+    const result = calculateEffect(row, 'proportion', null);
+
+    // Adjusted p = (100+0.5)/(100+1) = 0.995
+    expect(result).not.toBeNull();
+    expect(result.es).toBeGreaterThan(4); // Very positive logit
+    expect(Number.isFinite(result.vi)).toBe(true);
   });
 });
 

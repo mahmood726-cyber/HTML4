@@ -32,6 +32,7 @@ export function tauDL(effects) {
 
 /**
  * REML (Restricted Maximum Likelihood) tau² estimator
+ * Uses Fisher scoring algorithm with proper REML score function
  * @param {Array} effects - Array of effect objects
  * @param {number} maxIter - Maximum iterations (default from config)
  * @param {number} tol - Convergence tolerance (default from config)
@@ -44,18 +45,30 @@ export function tauREML(effects, maxIter = REML_CONFIG.maxIterations, tol = REML
   // Initialize with DL estimate
   let tau2 = tauDL(effects);
 
-  for (let i = 0; i < maxIter; i++) {
+  // Upper bound to prevent divergence
+  const maxTau2 = effects.reduce((acc, e) => acc + e.es ** 2, 0);
+
+  for (let iter = 0; iter < maxIter; iter++) {
     const w = effects.map(e => 1 / (e.vi + tau2));
     const sumW = w.reduce((a, b) => a + b, 0);
+    const sumW2 = w.reduce((a, b) => a + b * b, 0);
 
     // Weighted mean
     const mu = effects.reduce((acc, e, j) => acc + w[j] * e.es, 0) / sumW;
 
-    // Fisher scoring update
-    const num = effects.reduce((acc, e, j) => acc + w[j] ** 2 * ((e.es - mu) ** 2 - e.vi), 0);
-    const den = effects.reduce((acc, e, j) => acc + w[j] ** 2, 0);
+    // REML score function: S(τ²) = -0.5 * Σwi + 0.5 * Σwi²(yi-μ)²
+    // Fisher information: I(τ²) = 0.5 * Σwi²
+    // Newton-Raphson: τ² += S / I = [Σwi²(yi-μ)² - Σwi] / Σwi²
+    const sumW2Resid2 = effects.reduce((acc, e, j) => acc + w[j] * w[j] * (e.es - mu) ** 2, 0);
 
-    const tau2New = Math.max(0, tau2 + num / den);
+    const numerator = sumW2Resid2 - sumW;
+    const denominator = sumW2;
+
+    if (Math.abs(denominator) < 1e-10) {
+      return tau2;
+    }
+
+    const tau2New = Math.max(0, Math.min(maxTau2, tau2 + numerator / denominator));
 
     // Check convergence
     if (Math.abs(tau2New - tau2) < tol) {

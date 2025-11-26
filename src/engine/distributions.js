@@ -65,7 +65,8 @@ export function tCritical(df, alpha = 0.05) {
 }
 
 /**
- * T-distribution CDF approximation
+ * T-distribution CDF using regularized incomplete beta function
+ * Accurate for all df including small values
  * @param {number} t - T-statistic
  * @param {number} df - Degrees of freedom
  * @returns {number} Cumulative probability
@@ -75,14 +76,122 @@ export function tCDF(t, df) {
     return 0.5;
   }
 
-  // For large df, use normal approximation
-  if (df > 100) {
+  // For very large df, use normal approximation
+  if (df > 1000) {
     return normCDF(t);
   }
 
-  // Approximation using adjusted z-score
-  const z = t * Math.sqrt(1 - 1 / (4 * df) - 7 / (120 * df * df));
-  return normCDF(z);
+  // t-CDF via incomplete beta function:
+  // F(t) = 1 - 0.5 * I_x(df/2, 1/2) where x = df/(df + t²)
+  // For t > 0: F(t) = 1 - 0.5 * I_x(df/2, 1/2)
+  // For t < 0: F(t) = 0.5 * I_x(df/2, 1/2)
+  const x = df / (df + t * t);
+  const beta = incompleteBeta(x, df / 2, 0.5);
+
+  if (t >= 0) {
+    return 1 - 0.5 * beta;
+  } else {
+    return 0.5 * beta;
+  }
+}
+
+/**
+ * Regularized incomplete beta function I_x(a, b)
+ * Uses continued fraction expansion for accuracy
+ * @param {number} x - Upper limit (0 <= x <= 1)
+ * @param {number} a - Shape parameter a > 0
+ * @param {number} b - Shape parameter b > 0
+ * @returns {number} I_x(a, b)
+ */
+function incompleteBeta(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+
+  // Use symmetry relation if x > (a+1)/(a+b+2)
+  if (x > (a + 1) / (a + b + 2)) {
+    return 1 - incompleteBeta(1 - x, b, a);
+  }
+
+  // Compute log of beta function B(a,b) = Γ(a)Γ(b)/Γ(a+b)
+  const lbeta = logGamma(a) + logGamma(b) - logGamma(a + b);
+
+  // Front factor: x^a * (1-x)^b / (a * B(a,b))
+  const front = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - lbeta) / a;
+
+  // Continued fraction (Lentz's algorithm)
+  const maxIter = 200;
+  const eps = 1e-14;
+
+  let f = 1;
+  let C = 1;
+  let D = 0;
+
+  for (let m = 0; m <= maxIter; m++) {
+    let num;
+    if (m === 0) {
+      num = 1;
+    } else if (m % 2 === 1) {
+      // Odd terms
+      const k = (m - 1) / 2;
+      num = -(a + k) * (a + b + k) * x / ((a + 2 * k) * (a + 2 * k + 1));
+    } else {
+      // Even terms
+      const k = m / 2;
+      num = k * (b - k) * x / ((a + 2 * k - 1) * (a + 2 * k));
+    }
+
+    D = 1 + num * D;
+    if (Math.abs(D) < 1e-30) D = 1e-30;
+    D = 1 / D;
+
+    C = 1 + num / C;
+    if (Math.abs(C) < 1e-30) C = 1e-30;
+
+    const delta = C * D;
+    f *= delta;
+
+    if (Math.abs(delta - 1) < eps) {
+      break;
+    }
+  }
+
+  return front * (f - 1);
+}
+
+/**
+ * Log-gamma function using Lanczos approximation
+ * @param {number} x - Input value
+ * @returns {number} ln(Γ(x))
+ */
+function logGamma(x) {
+  if (x <= 0) return Infinity;
+
+  // Lanczos coefficients for g=7
+  const c = [
+    0.99999999999980993,
+    676.5203681218851,
+    -1259.1392167224028,
+    771.32342877765313,
+    -176.61502916214059,
+    12.507343278686905,
+    -0.13857109526572012,
+    9.9843695780195716e-6,
+    1.5056327351493116e-7
+  ];
+
+  if (x < 0.5) {
+    // Reflection formula
+    return Math.log(Math.PI / Math.sin(Math.PI * x)) - logGamma(1 - x);
+  }
+
+  x -= 1;
+  let sum = c[0];
+  for (let i = 1; i < c.length; i++) {
+    sum += c[i] / (x + i);
+  }
+
+  const t = x + 7.5;
+  return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(sum);
 }
 
 /**

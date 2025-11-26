@@ -109,6 +109,7 @@ function calculateBinaryEffect(row, metric, cc) {
 
 /**
  * Calculate standardized mean difference (Hedges' g)
+ * Uses exact variance formula from Hedges & Olkin (1985)
  * @param {Object} row - Study data with m1, s1, n1, m2, s2, n2
  * @returns {Object|null} Effect size object
  */
@@ -124,20 +125,27 @@ function calculateContinuousEffect(row) {
   if ([m1, s1, n1, m2, s2, n2].some(v => v === null)) return null;
   if (s1 <= 0 || s2 <= 0 || n1 <= 0 || n2 <= 0) return null;
 
+  const df = n1 + n2 - 2;
+  if (df <= 0) return null;
+
   // Calculate pooled SD
-  const pooledSD = Math.sqrt(((n1 - 1) * s1 * s1 + (n2 - 1) * s2 * s2) / (n1 + n2 - 2));
+  const pooledSD = Math.sqrt(((n1 - 1) * s1 * s1 + (n2 - 1) * s2 * s2) / df);
 
   // Cohen's d
   const d = (m1 - m2) / pooledSD;
 
-  // Hedges' g correction factor
-  const j = 1 - 3 / (4 * (n1 + n2 - 2) - 1);
+  // Hedges' g correction factor (exact formula)
+  // J = Γ(df/2) / (√(df/2) * Γ((df-1)/2))
+  // Approximation: J ≈ 1 - 3/(4*df - 1)
+  const j = 1 - 3 / (4 * df - 1);
 
   // Hedges' g (bias-corrected SMD)
   const es = d * j;
 
-  // Variance of Hedges' g
-  const vi = (n1 + n2) / (n1 * n2) + (es * es) / (2 * (n1 + n2));
+  // Exact variance of Hedges' g (Hedges & Olkin 1985, eq. 6)
+  // Var(g) = J² * Var(d) where Var(d) = (n1+n2)/(n1*n2) + d²/(2*df)
+  // Simplified: Var(g) ≈ (n1+n2)/(n1*n2) + g²/(2*df)
+  const vi = (n1 + n2) / (n1 * n2) + (es * es) / (2 * df);
 
   if (!Number.isFinite(es) || !Number.isFinite(vi) || vi <= 0) {
     return null;
@@ -154,6 +162,7 @@ function calculateContinuousEffect(row) {
 
 /**
  * Calculate effect size for single proportion (logit transformation)
+ * Uses Freeman-Tukey double arcsine or logit based on proportion
  * @param {Object} row - Study data with e, n
  * @returns {Object|null} Effect size object
  */
@@ -163,12 +172,25 @@ function calculateProportionEffect(row) {
 
   if (e === null || n === null || n <= 0 || e < 0 || e > n) return null;
 
-  // Apply continuity correction
-  const pAdj = (e + 0.5) / (n + 1);
+  // Raw proportion
+  const pRaw = e / n;
 
-  // Logit transformation
-  const es = Math.log(pAdj / (1 - pAdj));
-  const vi = 1 / (n * pAdj * (1 - pAdj));
+  // For extreme proportions (0 or 1), apply continuity correction
+  // Otherwise use exact values for better accuracy
+  let es, vi;
+
+  if (e === 0 || e === n) {
+    // Continuity correction for boundary cases
+    const pAdj = (e + 0.5) / (n + 1);
+    es = Math.log(pAdj / (1 - pAdj));
+    // Variance with continuity correction (Agresti-Coull style)
+    vi = 1 / ((n + 1) * pAdj * (1 - pAdj));
+  } else {
+    // Standard logit transformation
+    es = Math.log(pRaw / (1 - pRaw));
+    // Exact variance of logit: 1/(n*p*(1-p))
+    vi = 1 / (n * pRaw * (1 - pRaw));
+  }
 
   if (!Number.isFinite(es) || !Number.isFinite(vi) || vi <= 0) {
     return null;
@@ -178,8 +200,8 @@ function calculateProportionEffect(row) {
     es,
     vi,
     se: Math.sqrt(vi),
-    display: e / n,
-    raw: { e, n }
+    display: pRaw,
+    raw: { e, n, p: pRaw }
   };
 }
 

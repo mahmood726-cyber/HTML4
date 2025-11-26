@@ -87,9 +87,9 @@ export function poolInverseVariance(effects, tau2, options = {}) {
   // Q test p-value
   const qPVal = chiSqP(Q, df);
 
-  // Tau and its CI (using Q-profile method approximation)
+  // Tau and its CI (using Q-profile method)
   const tau = Math.sqrt(tau2);
-  const tauCI = calculateTauCI(tau2, Q, df, k, confLevel);
+  const tauCI = calculateTauCI(tau2, Q, df, k, confLevel, active);
 
   // H² CI
   const H2CI = calculateH2CI(H2, df, confLevel);
@@ -148,28 +148,128 @@ function calculateStudyStats(effects, pooledES, tau2, sumW) {
 }
 
 /**
- * Calculate CI for tau using Q-profile method approximation
+ * Calculate CI for tau² using Q-profile method
+ * Finds tau² values where Q(tau²) = chi-square critical values
  * @param {number} tau2 - Tau² estimate
  * @param {number} Q - Q statistic
  * @param {number} df - Degrees of freedom
  * @param {number} k - Number of studies
  * @param {number} confLevel - Confidence level
+ * @param {Array} effects - Effect objects for Q-profile calculation
  * @returns {Object} CI bounds { lo, hi }
  */
-function calculateTauCI(tau2, Q, df, k, confLevel) {
-  if (df <= 0 || tau2 === 0) {
+function calculateTauCI(tau2, Q, df, k, confLevel, effects = null) {
+  if (df <= 0) {
     return { lo: 0, hi: 0 };
   }
 
-  // Simplified approximation using chi-square distribution
-  // This is a rough approximation; full Q-profile requires iteration
   const alpha = 1 - confLevel;
-  const mult = 1.5; // Rough multiplier for CI width
 
-  const lo = Math.max(0, Math.sqrt(tau2) * (1 - mult / Math.sqrt(k)));
-  const hi = Math.sqrt(tau2) * (1 + mult / Math.sqrt(k));
+  // Chi-square critical values for Q-profile bounds
+  // Q ~ chi-square(k-1) under null, find tau² where Q equals critical values
+  const chiLo = chiSquareQuantile(alpha / 2, df);
+  const chiHi = chiSquareQuantile(1 - alpha / 2, df);
 
-  return { lo, hi };
+  // If we have effects, use iterative Q-profile method
+  if (effects && effects.length >= 2) {
+    const active = effects.filter(e => !e.excluded);
+    if (active.length >= 2) {
+      const lo = qProfileSearch(active, chiHi, 0, tau2 * 10 + 1);
+      const hi = qProfileSearch(active, chiLo, tau2, tau2 * 20 + 10);
+      return { lo: Math.sqrt(Math.max(0, lo)), hi: Math.sqrt(hi) };
+    }
+  }
+
+  // Fallback: Jackson's approximation when effects not available
+  // Based on Q ~ chi-square relationship
+  if (Q <= df) {
+    return { lo: 0, hi: 0 };
+  }
+
+  // Approximate using scaled relationship
+  const C = df; // Approximation of the C constant
+  const tau2Lo = Math.max(0, (Q - chiHi) / C);
+  const tau2Hi = Math.max(tau2, (Q - chiLo) / C);
+
+  return { lo: Math.sqrt(tau2Lo), hi: Math.sqrt(tau2Hi) };
+}
+
+/**
+ * Q-profile search: find tau² where Q(tau²) = target
+ * @param {Array} effects - Effect objects
+ * @param {number} target - Target Q value
+ * @param {number} lower - Lower search bound
+ * @param {number} upper - Upper search bound
+ * @returns {number} Tau² value
+ */
+function qProfileSearch(effects, target, lower, upper) {
+  const maxIter = 50;
+  const tol = 1e-6;
+
+  for (let i = 0; i < maxIter; i++) {
+    const mid = (lower + upper) / 2;
+    const Q = calculateQ(effects, mid);
+
+    if (Math.abs(Q - target) < tol || upper - lower < tol) {
+      return mid;
+    }
+
+    // Q decreases as tau² increases
+    if (Q > target) {
+      lower = mid;
+    } else {
+      upper = mid;
+    }
+  }
+
+  return (lower + upper) / 2;
+}
+
+/**
+ * Calculate Q statistic for given tau²
+ * @param {Array} effects - Effect objects
+ * @param {number} tau2 - Between-study variance
+ * @returns {number} Q statistic
+ */
+function calculateQ(effects, tau2) {
+  const w = effects.map(e => 1 / (e.vi + tau2));
+  const sumW = w.reduce((a, b) => a + b, 0);
+  const mu = effects.reduce((acc, e, i) => acc + w[i] * e.es, 0) / sumW;
+  return effects.reduce((acc, e, i) => acc + w[i] * (e.es - mu) ** 2, 0);
+}
+
+/**
+ * Chi-square quantile function (Wilson-Hilferty approximation inverse)
+ * @param {number} p - Probability
+ * @param {number} df - Degrees of freedom
+ * @returns {number} Chi-square quantile
+ */
+function chiSquareQuantile(p, df) {
+  if (df <= 0 || p <= 0 || p >= 1) return df;
+
+  // Wilson-Hilferty approximation inverse
+  const z = normQuantileApprox(p);
+  const term = 1 - 2 / (9 * df) + z * Math.sqrt(2 / (9 * df));
+  return df * Math.pow(Math.max(0.001, term), 3);
+}
+
+/**
+ * Simple normal quantile approximation
+ * @param {number} p - Probability
+ * @returns {number} Z-score
+ */
+function normQuantileApprox(p) {
+  if (p <= 0) return -8;
+  if (p >= 1) return 8;
+  if (p === 0.5) return 0;
+
+  // Rational approximation (Abramowitz & Stegun 26.2.23)
+  const t = p < 0.5 ? Math.sqrt(-2 * Math.log(p)) : Math.sqrt(-2 * Math.log(1 - p));
+  const c0 = 2.515517, c1 = 0.802853, c2 = 0.010328;
+  const d1 = 1.432788, d2 = 0.189269, d3 = 0.001308;
+
+  const z = t - (c0 + c1 * t + c2 * t * t) / (1 + d1 * t + d2 * t * t + d3 * t * t * t);
+  return p < 0.5 ? -z : z;
 }
 
 /**

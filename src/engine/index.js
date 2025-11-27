@@ -116,3 +116,75 @@ export {
   fitParametricSurvival,
   compareSurvivalDistributions
 } from './survival.js';
+
+// PET-PEESE Bias Correction
+export {
+  runPET,
+  runPEESE,
+  petPeese,
+  selectionModel,
+  enhancedTrimFill,
+  comprehensiveBiasAssessment
+} from './petPeese.js';
+
+// Transportability and Generalizability
+export {
+  calculatePopulationSimilarity,
+  inverseOddsWeighting,
+  assessStudyTransportability,
+  calibrationWeighting,
+  calculateGeneralizabilityIndex,
+  estimateTargetPopulationEffect
+} from './transportability.js';
+
+// Diagnostic Test Accuracy (DTA) Meta-Analysis
+export {
+  calculateAccuracyMeasures,
+  bivariateModel,
+  generateSROCCurve,
+  hsrocModel,
+  dtaMetaRegression,
+  quadasWeightedAnalysis
+} from './dta.js';
+
+// Data Conversion Utilities
+export {
+  medianIQRToMeanSD,
+  medianRangeToMeanSD,
+  combinedToMeanSD,
+  mcgrathQuantileMethod,
+  oddsRatioToRiskRatio,
+  riskRatioToOddsRatio,
+  hazardRatioToOddsRatio,
+  cohensD_to_HedgesG,
+  correlationToD,
+  dToCorrelation,
+  fisherZ,
+  fisherZWithSE,
+  inverseFisherZ,
+  estimateSampleSizeFromCI,
+  tToEffectSize,
+  fToEffectSize,
+  pValueToEffectSize,
+  standardizeStudyData
+} from './dataConversion.js';
+
+// Dose-Response Meta-Analysis
+export {
+  calculateDoseCovariance,
+  linearDoseResponse,
+  quadraticDoseResponse,
+  splineDoseResponse,
+  compareDoseResponseModels,
+  getDoseResponsePlotData
+} from './doseResponse.js';
+
+// Cross-Validation and Overfitting Detection
+export {
+  leaveOneOutCV,
+  kFoldCV,
+  influenceDiagnostics,
+  predictionInterval,
+  assessOverfittingRisk,
+  bootstrapValidation
+} from './crossValidation.js';

@@ -15,6 +15,7 @@ import { DEFAULT_CONF_LEVEL } from '../constants/index.js';
 export function poolInverseVariance(effects, tau2, options = {}) {
   const {
     useHKSJ = true,
+    useModifiedHKSJ = false,  // mKH: ad-hoc correction per Röver et al. 2015
     confLevel = DEFAULT_CONF_LEVEL,
     showPredictionInterval = true
   } = options;
@@ -49,9 +50,20 @@ export function poolInverseVariance(effects, tau2, options = {}) {
   let critVal = 1.96;
 
   // Apply HKSJ adjustment if requested and df > 0
+  // Standard HKSJ: SE * sqrt(Q/df) with t-distribution
+  // Modified HKSJ (mKH per Röver et al. 2015): ensures CI not narrower than z-based
   if (useHKSJ && df > 0) {
     const qStar = Q / df;
-    se = se * Math.sqrt(Math.max(1, qStar));
+
+    if (useModifiedHKSJ) {
+      // Modified HKSJ: use max(1, q*) to prevent counterintuitive narrow CIs
+      // when between-study variance is small relative to within-study variance
+      se = se * Math.sqrt(Math.max(1, qStar));
+    } else {
+      // Standard HKSJ: can produce narrower CIs when Q < df
+      se = se * Math.sqrt(qStar);
+    }
+
     critVal = tCritical(df, alpha);
   }
 

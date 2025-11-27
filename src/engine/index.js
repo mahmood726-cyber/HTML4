@@ -188,3 +188,47 @@ export {
   assessOverfittingRisk,
   bootstrapValidation
 } from './crossValidation.js';
+
+// Robust Variance Estimation (RVE) for Dependent Effects
+export {
+  constructVMatrix,
+  rveMetaAnalysis,
+  rveMetaRegression,
+  rveSensitivityAnalysis
+} from './rve.js';
+
+// Three-Level Meta-Analysis
+export {
+  threeLevelMetaAnalysis,
+  threeLevelMetaRegression,
+  compareModels as compareThreeLevelModels
+} from './threeLevelMA.js';
+
+// Multivariate Meta-Analysis (Riley's Method)
+export {
+  rileyMultivariateMA,
+  fullMultivariateMA,
+  compareUnivariateMultivariate
+} from './multivariateMA.js';
+
+// Exact Likelihood Methods for Sparse Data
+export {
+  binomialNormalModel,
+  betaBinomialModel,
+  penalizedLikelihood,
+  compareSparseDataMethods
+} from './exactLikelihood.js';
+
+// Robust Bayesian Meta-Analysis (RoBMA)
+export {
+  robustBayesianMA,
+  bayesianModelAveraging
+} from './robma.js';
+
+// P-Curve and P-Uniform Selection Models
+export {
+  pCurveAnalysis,
+  pUniform,
+  pUniformStar,
+  compareSelectionModels
+} from './pCurve.js';

@@ -543,16 +543,43 @@
     .rob-high { background: #ef4444; }
     .rob-unclear { background: #94a3b8; }
 
-    /* Responsive */
+    /* Responsive - Enhanced Mobile Support */
     @media (max-width: 1200px) {
         .container { grid-template-columns: 1fr; }
-        .sidebar { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+        .sidebar { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
     }
     @media (max-width: 768px) {
         header { flex-direction: column; gap: 0.75rem; padding: 1rem; }
+        .header-actions { flex-wrap: wrap; justify-content: center; }
         .container { padding: 0.75rem; }
         .forest-row { grid-template-columns: 100px 1fr 70px; }
         .forest-weight, .forest-ci { display: none; }
+        .module-nav { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+        .module-btn { flex-shrink: 0; }
+        .results-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+        .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .tab { flex-shrink: 0; }
+        .table-wrapper { max-height: 250px; }
+        .row-2, .row-3 { grid-template-columns: 1fr; }
+        .grade-table, .rob-table { font-size: 0.65rem; }
+        .grade-table th, .grade-table td, .rob-table th, .rob-table td { padding: 0.3rem; }
+        .stat-value { font-size: 0.95rem; }
+        .nnt-grid { grid-template-columns: repeat(5, 1fr); }
+    }
+    @media (max-width: 480px) {
+        header { padding: 0.75rem; }
+        .logo h1 { font-size: 1.1rem; }
+        .logo-tag { display: none; }
+        .btn { padding: 0.4rem 0.6rem; font-size: 0.7rem; }
+        .container { padding: 0.5rem; }
+        .panel-body { padding: 0.6rem; }
+        .stat-card { padding: 0.5rem; }
+        .stat-label { font-size: 0.6rem; }
+        .stat-value { font-size: 0.85rem; }
+        .results-grid { gap: 0.5rem; }
+        table { font-size: 0.7rem; }
+        th, td { padding: 0.25rem; }
+        .plot-container, .forest-container { min-height: 250px; }
     }
 
     /* Print */
@@ -565,6 +592,8 @@
 </style>
 
 </head> <body> <header> <div class="logo"> <h1>HTA Meta-Analysis Suite</h1> <span class="logo-tag">Professional Edition</span> </div> <div class="header-actions"> <button class="btn btn-ghost" onclick="App.exportState()">⬇ Export JSON</button> <button class="btn btn-ghost" onclick="App.exportCSV()">⬇ Export CSV</button> <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Import</button> <input type="file" id="import-file" hidden accept=".json,.csv" onchange="App.importFile(event)"> <button class="btn btn-ghost" onclick="App.loadExample()">BCG Example</button> <button class="btn btn-primary" onclick="App.recalc()">▶ Run Analysis</button> </div> </header>
+<div id="error-banner" style="display:none;background:#fecaca;color:#991b1b;padding:0.75rem 1rem;text-align:center;font-size:0.85rem;"></div>
+<div id="plotly-warning" style="display:none;background:#fef3c7;color:#92400e;padding:0.75rem 1rem;text-align:center;font-size:0.85rem;">Warning: Plotly.js failed to load. Charts will not be displayed. Please check your internet connection.</div>
 <div class="container">
     <aside class="sidebar">
         <!-- Analysis Settings -->
@@ -1672,52 +1701,83 @@ const App = {
         }
     },
 
+    showError(message) {
+        console.error('HTA Meta-Analysis Error:', message);
+        const errorDiv = document.getElementById('error-banner');
+        if (errorDiv) {
+            errorDiv.textContent = `Error: ${message}`;
+            errorDiv.style.display = 'block';
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+        }
+    },
+
     recalc() {
-        const type = document.getElementById('data-type').value;
-        const metric = document.getElementById('metric').value;
-        const tauMethod = document.getElementById('tau-method').value;
-        const useHKSJ = document.getElementById('hksj').checked;
-        const confLevel = parseFloat(document.getElementById('conf-level').value);
+        try {
+            const type = document.getElementById('data-type').value;
+            const metric = document.getElementById('metric').value;
+            const tauMethod = document.getElementById('tau-method').value;
+            const useHKSJ = document.getElementById('hksj').checked;
+            const confLevel = parseFloat(document.getElementById('conf-level').value);
 
-        const effects = this.data.map((row, i) => {
-            const eff = Engine.calcEffect(row, type, metric);
-            if (!eff) return null;
-            return {
-                id: row.study || `Study ${i+1}`,
-                year: row.year || '',
-                ...eff,
-                excluded: row.exclude === true || row.exclude === 'true',
-                rob: row.rob,
-                subgroup: row.subgroup
-            };
-        }).filter(e => e !== null);
-
-        if (effects.length === 0) {
-            this.clearResults();
-            return;
-        }
-
-        const activeEffects = effects.filter(e => !e.excluded);
-        let tau2 = 0;
-        if (activeEffects.length >= 2) {
-            switch(tauMethod) {
-                case 'reml': tau2 = Engine.tauREML(activeEffects); break;
-                case 'pm': tau2 = Engine.tauPM(activeEffects); break;
-                case 'sj': tau2 = Engine.tauSJ(activeEffects); break;
-                default: tau2 = Engine.tauDL(activeEffects);
+            if (isNaN(confLevel) || confLevel <= 0 || confLevel >= 1) {
+                this.showError('Invalid confidence level. Using default 0.95.');
+                return;
             }
-        }
 
-        const res = Engine.poolIV(effects, tau2, useHKSJ, confLevel);
-        if (!res) {
+            const effects = this.data.map((row, i) => {
+                try {
+                    const eff = Engine.calcEffect(row, type, metric);
+                    if (!eff) return null;
+                    return {
+                        id: row.study || `Study ${i+1}`,
+                        year: row.year || '',
+                        ...eff,
+                        excluded: row.exclude === true || row.exclude === 'true',
+                        rob: row.rob,
+                        subgroup: row.subgroup
+                    };
+                } catch (e) {
+                    console.warn(`Error calculating effect for row ${i}:`, e);
+                    return null;
+                }
+            }).filter(e => e !== null);
+
+            if (effects.length === 0) {
+                this.clearResults();
+                return;
+            }
+
+            const activeEffects = effects.filter(e => !e.excluded);
+            let tau2 = 0;
+            if (activeEffects.length >= 2) {
+                try {
+                    switch(tauMethod) {
+                        case 'reml': tau2 = Engine.tauREML(activeEffects); break;
+                        case 'pm': tau2 = Engine.tauPM(activeEffects); break;
+                        case 'sj': tau2 = Engine.tauSJ(activeEffects); break;
+                        default: tau2 = Engine.tauDL(activeEffects);
+                    }
+                    if (isNaN(tau2) || tau2 < 0) tau2 = 0;
+                } catch (e) {
+                    console.warn('Error calculating tau², using 0:', e);
+                    tau2 = 0;
+                }
+            }
+
+            const res = Engine.poolIV(effects, tau2, useHKSJ, confLevel);
+            if (!res) {
+                this.clearResults();
+                return;
+            }
+
+            this.currRes = res;
+            this.currRes.metric = metric;
+            this.currRes.type = type;
+            this.updateDisplay(res, type, metric);
+        } catch (error) {
+            this.showError('Calculation failed: ' + error.message);
             this.clearResults();
-            return;
         }
-
-        this.currRes = res;
-        this.currRes.metric = metric;
-        this.currRes.type = type;
-        this.updateDisplay(res, type, metric);
     },
 
     clearResults() {
@@ -1729,42 +1789,52 @@ const App = {
     },
 
     updateDisplay(res, type, metric) {
-        const isRatio = ['OR','RR','HR'].includes(metric) || type === 'survival';
-        const fmt = (v, d=2) => v === null || isNaN(v) ? '—' : v.toFixed(d);
-        const fmtES = v => isRatio ? fmt(Math.exp(v), 2) : fmt(v, 3);
+        try {
+            const isRatio = ['OR','RR','HR'].includes(metric) || type === 'survival';
+            const fmt = (v, d=2) => v === null || isNaN(v) ? '—' : v.toFixed(d);
+            const fmtES = v => isRatio ? fmt(Math.exp(v), 2) : fmt(v, 3);
 
-        document.getElementById('res-es').textContent = fmtES(res.es);
-        document.getElementById('res-ci').textContent = `95% CI: ${fmtES(res.ciLo)} – ${fmtES(res.ciHi)}`;
-        
-        const pEl = document.getElementById('res-p');
-        pEl.textContent = res.pVal < 0.001 ? '<0.001' : fmt(res.pVal, 3);
-        pEl.classList.toggle('sig', res.pVal < 0.05);
-        
-        document.getElementById('res-z').textContent = `z = ${fmt(res.z, 2)}`;
-        document.getElementById('res-i2').textContent = `${fmt(res.I2, 1)}%`;
-        document.getElementById('res-tau').textContent = `τ² = ${fmt(res.tau2, 4)}`;
-        document.getElementById('res-q').textContent = fmt(res.Q, 2);
-        document.getElementById('res-qp').textContent = `df = ${res.df}, p = ${fmt(Engine.chiSqP(res.Q, res.df), 3)}`;
-        document.getElementById('res-k').textContent = res.k;
-        document.getElementById('res-n').textContent = res.totalN ? `N = ${res.totalN}` : '—';
-        document.getElementById('res-pi').textContent = `${fmtES(res.piLo)} – ${fmtES(res.piHi)}`;
-        document.getElementById('res-h2').textContent = fmt(res.H2, 2);
-        document.getElementById('res-tau-val').textContent = fmt(Math.sqrt(res.tau2), 4);
+            document.getElementById('res-es').textContent = fmtES(res.es);
+            document.getElementById('res-ci').textContent = `95% CI: ${fmtES(res.ciLo)} – ${fmtES(res.ciHi)}`;
 
-        // Render all visualizations
-        this.renderForest(res, isRatio);
-        this.renderFunnel(res, isRatio);
-        this.renderBaujat(res);
-        this.renderLabbe(res);
-        this.renderRadial(res);
-        this.renderLOO(res, isRatio);
-        this.renderCumulative(res, isRatio);
-        this.renderInfluence(res);
-        this.renderBias(res);
-        this.renderTSA(res);
-        this.renderEconomic(res, metric);
-        this.renderGRADE(res);
-        this.renderRoB(res);
+            const pEl = document.getElementById('res-p');
+            pEl.textContent = res.pVal < 0.001 ? '<0.001' : fmt(res.pVal, 3);
+            pEl.classList.toggle('sig', res.pVal < 0.05);
+
+            document.getElementById('res-z').textContent = `z = ${fmt(res.z, 2)}`;
+            document.getElementById('res-i2').textContent = `${fmt(res.I2, 1)}%`;
+            document.getElementById('res-tau').textContent = `τ² = ${fmt(res.tau2, 4)}`;
+            document.getElementById('res-q').textContent = fmt(res.Q, 2);
+            document.getElementById('res-qp').textContent = `df = ${res.df}, p = ${fmt(Engine.chiSqP(res.Q, res.df), 3)}`;
+            document.getElementById('res-k').textContent = res.k;
+            document.getElementById('res-n').textContent = res.totalN ? `N = ${res.totalN}` : '—';
+            document.getElementById('res-pi').textContent = `${fmtES(res.piLo)} – ${fmtES(res.piHi)}`;
+            document.getElementById('res-h2').textContent = fmt(res.H2, 2);
+            document.getElementById('res-tau-val').textContent = fmt(Math.sqrt(res.tau2), 4);
+
+            // Render all visualizations with error protection
+            const renderFns = [
+                () => this.renderForest(res, isRatio),
+                () => this.renderFunnel(res, isRatio),
+                () => this.renderBaujat(res),
+                () => this.renderLabbe(res),
+                () => this.renderRadial(res),
+                () => this.renderLOO(res, isRatio),
+                () => this.renderCumulative(res, isRatio),
+                () => this.renderInfluence(res),
+                () => this.renderBias(res),
+                () => this.renderTSA(res),
+                () => this.renderEconomic(res, metric),
+                () => this.renderGRADE(res),
+                () => this.renderRoB(res)
+            ];
+
+            renderFns.forEach(fn => {
+                try { fn(); } catch (e) { console.warn('Render error:', e); }
+            });
+        } catch (error) {
+            this.showError('Display update failed: ' + error.message);
+        }
     },
 
     renderForest(res, isRatio) {
@@ -2684,7 +2754,27 @@ const App = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if Plotly loaded successfully
+    if (typeof Plotly === 'undefined') {
+        const warning = document.getElementById('plotly-warning');
+        if (warning) warning.style.display = 'block';
+        console.error('Plotly.js failed to load. Charts will not be available.');
+    }
+    App.init();
+});
+
+// Global error handler for uncaught errors
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    console.error('Global error:', msg, 'at', url, lineNo);
+    const errorDiv = document.getElementById('error-banner');
+    if (errorDiv) {
+        errorDiv.textContent = 'An unexpected error occurred. Check console for details.';
+        errorDiv.style.display = 'block';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+    }
+    return false;
+};
 </script>
 
 </body> </html>
